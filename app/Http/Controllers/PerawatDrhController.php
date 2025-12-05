@@ -656,7 +656,9 @@ class PerawatDrhController extends Controller
         ]);
     }
 
-    /* ============ TANDA JASA ============ */
+  /* ============ TANDA JASA ============ */
+
+    // 1. Index (List)
     public function tandajasaIndex()
     {
         $user = $this->currentPerawat();
@@ -666,6 +668,16 @@ class PerawatDrhController extends Controller
         return view('perawat.tandajasa.index', compact('user','tandajasa'));
     }
 
+    // 2. Create (Form Tambah)
+    public function tandajasaCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.tandajasa.create', compact('user'));
+    }
+
+    // 3. Store (Simpan)
     public function tandajasaStore(Request $request)
     {
         $user = $this->currentPerawat();
@@ -694,6 +706,17 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 4. Edit (Form Edit)
+    public function tandajasaEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        $tandajasa = PerawatTandaJasa::where('user_id', $user->id)->findOrFail($id);
+        return view('perawat.tandajasa.edit', compact('user', 'tandajasa'));
+    }
+
+    // 5. Update (Simpan Perubahan)
     public function tandajasaUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
@@ -711,7 +734,9 @@ class PerawatDrhController extends Controller
         ]);
 
         $data = $request->only('nama_penghargaan','instansi_pemberi','tahun','nomor_sk','tanggal_sk');
+
         if ($request->hasFile('dokumen')) {
+            // if ($tj->dokumen_path) Storage::disk('public')->delete($tj->dokumen_path);
             $data['dokumen_path'] = $request->file('dokumen')->store('perawat/tandajasa','public');
         }
 
@@ -722,12 +747,16 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 6. Destroy (Hapus)
     public function tandajasaDestroy($id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
         $tj = PerawatTandaJasa::where('user_id',$user->id)->findOrFail($id);
+
+        // if ($tj->dokumen_path) Storage::disk('public')->delete($tj->dokumen_path);
+
         $tj->delete();
 
         return redirect()->route('perawat.tandajasa.index')->with('swal',[
