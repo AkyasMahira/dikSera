@@ -161,13 +161,14 @@
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     {{-- Tombol Edit --}}
-                                    <a href="#" {{-- Ganti route edit nanti --}} class="btn btn-icon btn-outline-warning"
-                                        title="Edit Data" data-bs-toggle="tooltip">
+                                    <a href="{{ route('admin.perawat.edit', $p->id) }}"
+                                        class="btn btn-icon btn-outline-warning" title="Edit Data" data-bs-toggle="tooltip">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     {{-- Tombol Hapus --}}
-                                    <form action="#" method="POST" onsubmit=""
-                                        class="d-inline">
+                                    <form action="{{ route('admin.perawat.destroy', $p->id) }}" method="POST"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Yakin ingin menghapus data perawat ini?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-icon btn-outline-danger" title="Hapus"
