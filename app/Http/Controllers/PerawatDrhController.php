@@ -111,7 +111,9 @@ class PerawatDrhController extends Controller
         ]);
     }
 
-    /* ============ PENDIDIKAN ============ */
+ /* ============ PENDIDIKAN ============ */
+
+    // 1. Index (List)
     public function pendidikanIndex()
     {
         $user = $this->currentPerawat();
@@ -121,6 +123,16 @@ class PerawatDrhController extends Controller
         return view('perawat.pendidikan.index', compact('user','pendidikan'));
     }
 
+    // 2. Create (Form Tambah)
+    public function pendidikanCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.pendidikan.create', compact('user'));
+    }
+
+    // 3. Store (Simpan)
     public function pendidikanStore(Request $request)
     {
         $user = $this->currentPerawat();
@@ -133,8 +145,8 @@ class PerawatDrhController extends Controller
             'tempat'         => 'nullable|string|max:100',
             'tahun_lulus'    => 'nullable|string|max:10',
             'dokumen'        => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
-            'jurusan'        => 'nullable|string|max:150', 
-            'tahun_masuk'    => 'nullable|string|max:10', 
+            'jurusan'        => 'nullable|string|max:150',
+            'tahun_masuk'    => 'nullable|string|max:10',
         ]);
 
         $data = $request->only('jenjang','nama_institusi','akreditasi','tempat','tahun_lulus','jurusan','tahun_masuk');
@@ -151,6 +163,17 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 4. Edit (Form Edit)
+    public function pendidikanEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        $pendidikan = PerawatPendidikan::where('user_id', $user->id)->findOrFail($id);
+        return view('perawat.pendidikan.edit', compact('user', 'pendidikan'));
+    }
+
+    // 5. Update (Simpan Perubahan)
     public function pendidikanUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
@@ -165,12 +188,14 @@ class PerawatDrhController extends Controller
             'tempat'         => 'nullable|string|max:100',
             'tahun_lulus'    => 'nullable|string|max:10',
             'dokumen'        => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
-            'jurusan'        => 'nullable|string|max:150', 
-            'tahun_masuk'    => 'nullable|string|max:10', 
+            'jurusan'        => 'nullable|string|max:150',
+            'tahun_masuk'    => 'nullable|string|max:10',
         ]);
 
         $data = $request->only('jenjang','nama_institusi','akreditasi','tempat','tahun_lulus','jurusan','tahun_masuk');
+
         if ($request->hasFile('dokumen')) {
+            // if ($pendidikan->dokumen_path) Storage::disk('public')->delete($pendidikan->dokumen_path);
             $data['dokumen_path'] = $request->file('dokumen')->store('perawat/pendidikan','public');
         }
 
@@ -181,12 +206,16 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 6. Destroy (Hapus)
     public function pendidikanDestroy($id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
         $pendidikan = PerawatPendidikan::where('user_id',$user->id)->findOrFail($id);
+
+        // if ($pendidikan->dokumen_path) Storage::disk('public')->delete($pendidikan->dokumen_path);
+
         $pendidikan->delete();
 
         return redirect()->route('perawat.pendidikan.index')->with('swal', [
@@ -194,7 +223,9 @@ class PerawatDrhController extends Controller
         ]);
     }
 
-    /* ============ PELATIHAN ============ */
+   /* ============ PELATIHAN ============ */
+
+    // 1. Index (List)
     public function pelatihanIndex()
     {
         $user = $this->currentPerawat();
@@ -204,6 +235,16 @@ class PerawatDrhController extends Controller
         return view('perawat.pelatihan.index', compact('user','pelatihan'));
     }
 
+    // 2. Create (Form Tambah)
+    public function pelatihanCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.pelatihan.create', compact('user'));
+    }
+
+    // 3. Store (Simpan)
     public function pelatihanStore(Request $request)
     {
         $user = $this->currentPerawat();
@@ -233,6 +274,17 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 4. Edit (Form Edit)
+    public function pelatihanEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        $pelatihan = PerawatPelatihan::where('user_id', $user->id)->findOrFail($id);
+        return view('perawat.pelatihan.edit', compact('user', 'pelatihan'));
+    }
+
+    // 5. Update (Simpan Perubahan)
     public function pelatihanUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
@@ -251,7 +303,9 @@ class PerawatDrhController extends Controller
         ]);
 
         $data = $request->only('nama_pelatihan','penyelenggara','tempat','durasi','tanggal_mulai','tanggal_selesai');
+
         if ($request->hasFile('dokumen')) {
+            // if ($pelatihan->dokumen_path) Storage::disk('public')->delete($pelatihan->dokumen_path);
             $data['dokumen_path'] = $request->file('dokumen')->store('perawat/pelatihan','public');
         }
 
@@ -262,12 +316,16 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 6. Destroy (Hapus)
     public function pelatihanDestroy($id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
         $pelatihan = PerawatPelatihan::where('user_id',$user->id)->findOrFail($id);
+
+        // if ($pelatihan->dokumen_path) Storage::disk('public')->delete($pelatihan->dokumen_path);
+
         $pelatihan->delete();
 
         return redirect()->route('perawat.pelatihan.index')->with('swal',[
@@ -276,20 +334,32 @@ class PerawatDrhController extends Controller
     }
 
     /* ============ PEKERJAAN ============ */
-   public function pekerjaanIndex()
+
+    // 1. Menampilkan Tabel List (index.blade.php)
+    public function pekerjaanIndex()
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
         // Urutkan berdasarkan tahun mulai terbaru
         $pekerjaan = PerawatPekerjaan::where('user_id', $user->id)
-                     ->orderBy('tahun_mulai', 'desc')
-                     ->get();
+                                     ->orderBy('tahun_mulai', 'desc')
+                                     ->get();
 
         return view('perawat.pekerjaan.index', compact('user', 'pekerjaan'));
     }
 
-   public function pekerjaanStore(Request $request)
+    // 2. Menampilkan Form Tambah (create.blade.php) -- [BARU]
+    public function pekerjaanCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.pekerjaan.create', compact('user'));
+    }
+
+    // 3. Proses Simpan Data (Store)
+    public function pekerjaanStore(Request $request)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
@@ -299,7 +369,7 @@ class PerawatDrhController extends Controller
             'jabatan'       => 'required|string|max:150',
             'tahun_mulai'   => 'nullable|string|max:4', // Sesuai Migration
             'tahun_selesai' => 'nullable|string|max:4', // Sesuai Migration
-            'keterangan'    => 'nullable|string|max:255', // Sesuai Migration
+            'keterangan'    => 'nullable|string|max:255',
             'dokumen'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
         ]);
 
@@ -317,6 +387,19 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 4. Menampilkan Form Edit (edit.blade.php) -- [BARU]
+    public function pekerjaanEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        // Ambil data & pastikan milik user yang login
+        $pekerjaan = PerawatPekerjaan::where('user_id', $user->id)->findOrFail($id);
+
+        return view('perawat.pekerjaan.edit', compact('user', 'pekerjaan'));
+    }
+
+    // 5. Proses Update Data
     public function pekerjaanUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
@@ -336,6 +419,9 @@ class PerawatDrhController extends Controller
         $data = $request->only('nama_instansi', 'jabatan', 'tahun_mulai', 'tahun_selesai', 'keterangan');
 
         if ($request->hasFile('dokumen')) {
+            // Hapus file lama jika diperlukan
+            // if ($pekerjaan->dokumen_path) Storage::disk('public')->delete($pekerjaan->dokumen_path);
+
             $data['dokumen_path'] = $request->file('dokumen')->store('perawat/pekerjaan', 'public');
         }
 
@@ -346,20 +432,26 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 6. Hapus Data
     public function pekerjaanDestroy($id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
         $pekerjaan = PerawatPekerjaan::where('user_id',$user->id)->findOrFail($id);
+
+        // Hapus file fisik jika diperlukan
+        // if ($pekerjaan->dokumen_path) Storage::disk('public')->delete($pekerjaan->dokumen_path);
+
         $pekerjaan->delete();
 
         return redirect()->route('perawat.pekerjaan.index')->with('swal',[
             'icon'=>'success','title'=>'Berhasil','text'=>'Riwayat pekerjaan dihapus.'
         ]);
     }
+   /* ============ KELUARGA ============ */
 
-    /* ============ KELUARGA ============ */
+    // 1. Menampilkan Halaman List (index.blade.php)
     public function keluargaIndex()
     {
         $user = $this->currentPerawat();
@@ -369,6 +461,16 @@ class PerawatDrhController extends Controller
         return view('perawat.keluarga.index', compact('user', 'keluarga'));
     }
 
+    // 2. Menampilkan Halaman Form Tambah (create.blade.php) -- BARU
+    public function keluargaCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.keluarga.create', compact('user'));
+    }
+
+    // 3. Proses Simpan Data (Store)
     public function keluargaStore(Request $request)
     {
         $user = $this->currentPerawat();
@@ -391,6 +493,19 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 4. Menampilkan Halaman Form Edit (edit.blade.php) -- BARU
+    public function keluargaEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        // Pastikan data yang diedit milik user yang sedang login
+        $keluarga = PerawatKeluarga::where('user_id', $user->id)->findOrFail($id);
+
+        return view('perawat.keluarga.edit', compact('user', 'keluarga'));
+    }
+
+    // 5. Proses Update Data
     public function keluargaUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
@@ -411,6 +526,8 @@ class PerawatDrhController extends Controller
             'icon' => 'success', 'title' => 'Berhasil', 'text' => 'Data keluarga diperbarui.'
         ]);
     }
+
+    // 6. Hapus Data
     public function keluargaDestroy($id)
     {
         $user = $this->currentPerawat();
@@ -425,15 +542,27 @@ class PerawatDrhController extends Controller
     }
 
     /* ============ ORGANISASI ============ */
+
+    // 1. Menampilkan Tabel List (index.blade.php)
     public function organisasiIndex()
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
-        $organisasi = PerawatOrganisasi::where('user_id',$user->id)->get();
-        return view('perawat.organisasi.index', compact('user','organisasi'));
+        $organisasi = PerawatOrganisasi::where('user_id', $user->id)->get();
+        return view('perawat.organisasi.index', compact('user', 'organisasi'));
     }
 
+    // 2. Menampilkan Form Tambah (create.blade.php) -- [BARU]
+    public function organisasiCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.organisasi.create', compact('user'));
+    }
+
+    // 3. Proses Simpan Data (Store)
     public function organisasiStore(Request $request)
     {
         $user = $this->currentPerawat();
@@ -443,69 +572,93 @@ class PerawatDrhController extends Controller
             'nama_organisasi' => 'required|string|max:150',
             'jabatan'         => 'required|string|max:150',
             'tempat'          => 'nullable|string|max:100',
-            'tahun_mulai'   => 'nullable|date',
-            'tahun_selesai' => 'nullable|date',
+            'tahun_mulai'     => 'nullable|date',
+            'tahun_selesai'   => 'nullable|date',
             'pemimpin'        => 'nullable|string|max:150',
             'dokumen'         => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
         ]);
 
-        $data = $request->only('nama_organisasi','jabatan','tempat','tahun_mulai','tahun_selesai','pemimpin');
+        $data = $request->only('nama_organisasi', 'jabatan', 'tempat', 'tahun_mulai', 'tahun_selesai', 'pemimpin');
         $data['user_id'] = $user->id;
 
         if ($request->hasFile('dokumen')) {
-            $data['dokumen_path'] = $request->file('dokumen')->store('perawat/organisasi','public');
+            $data['dokumen_path'] = $request->file('dokumen')->store('perawat/organisasi', 'public');
         }
 
         PerawatOrganisasi::create($data);
 
-        return redirect()->route('perawat.organisasi.index')->with('swal',[
-            'icon'=>'success','title'=>'Berhasil','text'=>'Data organisasi ditambahkan.'
+        return redirect()->route('perawat.organisasi.index')->with('swal', [
+            'icon' => 'success', 'title' => 'Berhasil', 'text' => 'Data organisasi ditambahkan.'
         ]);
     }
 
+    // 4. Menampilkan Form Edit (edit.blade.php) -- [BARU]
+    public function organisasiEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        // Ambil data berdasarkan ID dan pastikan milik user yang login
+        $organisasi = PerawatOrganisasi::where('user_id', $user->id)->findOrFail($id);
+
+        return view('perawat.organisasi.edit', compact('user', 'organisasi'));
+    }
+
+    // 5. Proses Update Data
     public function organisasiUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
-        $organisasi = PerawatOrganisasi::where('user_id',$user->id)->findOrFail($id);
+        $organisasi = PerawatOrganisasi::where('user_id', $user->id)->findOrFail($id);
 
         $request->validate([
             'nama_organisasi' => 'required|string|max:150',
             'jabatan'         => 'required|string|max:150',
             'tempat'          => 'nullable|string|max:100',
-            'tahun_mulai'   => 'nullable|date',
-            'tahun_selesai' => 'nullable|date',
+            'tahun_mulai'     => 'nullable|date',
+            'tahun_selesai'   => 'nullable|date',
             'pemimpin'        => 'nullable|string|max:150',
             'dokumen'         => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
         ]);
 
-        $data = $request->only('nama_organisasi','jabatan','tempat','tahun_mulai','tahun_selesai','pemimpin');
+        $data = $request->only('nama_organisasi', 'jabatan', 'tempat', 'tahun_mulai', 'tahun_selesai', 'pemimpin');
+
         if ($request->hasFile('dokumen')) {
-            $data['dokumen_path'] = $request->file('dokumen')->store('perawat/organisasi','public');
+            // Hapus file lama jika ada (opsional, praktik bagus untuk menghemat storage)
+            // if ($organisasi->dokumen_path) Storage::disk('public')->delete($organisasi->dokumen_path);
+
+            $data['dokumen_path'] = $request->file('dokumen')->store('perawat/organisasi', 'public');
         }
 
         $organisasi->update($data);
 
-        return redirect()->route('perawat.organisasi.index')->with('swal',[
-            'icon'=>'success','title'=>'Berhasil','text'=>'Data organisasi diperbarui.'
+        return redirect()->route('perawat.organisasi.index')->with('swal', [
+            'icon' => 'success', 'title' => 'Berhasil', 'text' => 'Data organisasi diperbarui.'
         ]);
     }
 
+    // 6. Hapus Data
     public function organisasiDestroy($id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
-        $organisasi = PerawatOrganisasi::where('user_id',$user->id)->findOrFail($id);
+        $organisasi = PerawatOrganisasi::where('user_id', $user->id)->findOrFail($id);
+
+        // Hapus file fisik jika diperlukan
+        // if ($organisasi->dokumen_path) Storage::disk('public')->delete($organisasi->dokumen_path);
+
         $organisasi->delete();
 
-        return redirect()->route('perawat.organisasi.index')->with('swal',[
-            'icon'=>'success','title'=>'Berhasil','text'=>'Data organisasi dihapus.'
+        return redirect()->route('perawat.organisasi.index')->with('swal', [
+            'icon' => 'success', 'title' => 'Berhasil', 'text' => 'Data organisasi dihapus.'
         ]);
     }
 
-    /* ============ TANDA JASA ============ */
+  /* ============ TANDA JASA ============ */
+
+    // 1. Index (List)
     public function tandajasaIndex()
     {
         $user = $this->currentPerawat();
@@ -515,6 +668,16 @@ class PerawatDrhController extends Controller
         return view('perawat.tandajasa.index', compact('user','tandajasa'));
     }
 
+    // 2. Create (Form Tambah)
+    public function tandajasaCreate()
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        return view('perawat.tandajasa.create', compact('user'));
+    }
+
+    // 3. Store (Simpan)
     public function tandajasaStore(Request $request)
     {
         $user = $this->currentPerawat();
@@ -543,6 +706,17 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 4. Edit (Form Edit)
+    public function tandajasaEdit($id)
+    {
+        $user = $this->currentPerawat();
+        if (!$user) return redirect('/');
+
+        $tandajasa = PerawatTandaJasa::where('user_id', $user->id)->findOrFail($id);
+        return view('perawat.tandajasa.edit', compact('user', 'tandajasa'));
+    }
+
+    // 5. Update (Simpan Perubahan)
     public function tandajasaUpdate(Request $request, $id)
     {
         $user = $this->currentPerawat();
@@ -560,7 +734,9 @@ class PerawatDrhController extends Controller
         ]);
 
         $data = $request->only('nama_penghargaan','instansi_pemberi','tahun','nomor_sk','tanggal_sk');
+
         if ($request->hasFile('dokumen')) {
+            // if ($tj->dokumen_path) Storage::disk('public')->delete($tj->dokumen_path);
             $data['dokumen_path'] = $request->file('dokumen')->store('perawat/tandajasa','public');
         }
 
@@ -571,12 +747,16 @@ class PerawatDrhController extends Controller
         ]);
     }
 
+    // 6. Destroy (Hapus)
     public function tandajasaDestroy($id)
     {
         $user = $this->currentPerawat();
         if (!$user) return redirect('/');
 
         $tj = PerawatTandaJasa::where('user_id',$user->id)->findOrFail($id);
+
+        // if ($tj->dokumen_path) Storage::disk('public')->delete($tj->dokumen_path);
+
         $tj->delete();
 
         return redirect()->route('perawat.tandajasa.index')->with('swal',[

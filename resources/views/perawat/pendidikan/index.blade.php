@@ -1,224 +1,313 @@
 @extends('layouts.app')
 
-@php
-    $pageTitle = 'Riwayat Pendidikan';
-    $pageSubtitle = 'Kelola data pendidikan formal dan akademik Anda.';
-@endphp
-
-@section('title', 'Pendidikan – DIKSERA')
+@section('title', 'Riwayat Pendidikan – DIKSERA')
 
 @push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    .content-card {
-        background: #ffffff;
-        border-radius: 16px;
-        border: 1px solid var(--border-soft);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-        padding: 24px;
+    :root {
+        --primary-blue: #2563eb;
+        --primary-hover: #1d4ed8;
+        --text-dark: #0f172a;
+        --text-gray: #64748b;
+        --bg-light: #f1f5f9;
     }
-    .form-control-custom {
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-dark);
+    }
+
+    /* --- Header Area --- */
+    .page-header {
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+
+    /* --- Buttons --- */
+    .btn-blue {
+        background-color: var(--primary-blue);
+        color: white;
+        padding: 10px 24px;
         border-radius: 8px;
-        border: 1px solid var(--border-soft);
-        padding: 8px 12px;
-        font-size: 13px;
-        transition: all 0.2s;
-    }
-    .form-control-custom:focus {
-        border-color: var(--blue-main);
-        box-shadow: 0 0 0 3px var(--blue-soft);
-    }
-    .form-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text-muted);
-        margin-bottom: 6px;
-    }
-    .table-custom th {
-        background-color: var(--blue-soft-2);
-        color: var(--text-main);
         font-weight: 600;
-        font-size: 12px;
-        border-bottom: 2px solid #dbeafe;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 12px 8px;
-        vertical-align: middle;
+        font-size: 0.9rem;
+        border: 1px solid var(--primary-blue);
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
-    .table-custom td {
-        vertical-align: middle;
-        padding: 10px 8px;
-        border-bottom: 1px solid var(--blue-soft-2);
+
+    .btn-blue:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.3);
     }
-    .btn-action {
+
+    .btn-white {
+        background: white;
+        color: var(--text-gray);
+        border: 1px solid #e2e8f0;
+        padding: 10px 18px;
         border-radius: 8px;
-        font-size: 11px;
-        padding: 6px 10px;
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-white:hover {
+        background-color: #f8fafc;
+        color: var(--text-dark);
+        border-color: #cbd5e1;
+    }
+
+    /* --- Table Card --- */
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .custom-table thead th {
+        background-color: #f1f5f9;
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+    }
+
+    .custom-table tbody tr {
+        transition: background-color 0.2s;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .custom-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: #eff6ff;
+    }
+
+    .custom-table td {
+        padding: 20px 24px;
+        vertical-align: middle;
+        font-size: 0.95rem;
+        color: var(--text-gray);
+    }
+
+    /* --- Typography & Elements --- */
+    .data-title {
+        font-weight: 600;
+        color: var(--text-dark);
+        display: block;
+        margin-bottom: 4px;
+        font-size: 1rem;
+    }
+
+    .data-sub {
+        font-size: 0.85rem;
+        color: var(--text-gray);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge-soft {
+        background-color: #eff6ff;
+        color: var(--primary-blue);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+
+    /* Link Biru */
+    .link-blue {
+        color: var(--primary-blue);
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: 0.2s;
+    }
+    .link-blue:hover {
+        color: var(--primary-hover);
+        text-decoration: underline;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        transition: 0.2s;
+        background: transparent;
+        border: 1px solid transparent;
+    }
+    .action-btn:hover { background: #dbeafe; color: var(--primary-blue); }
+    .action-btn.delete:hover { background: #fee2e2; color: #ef4444; }
+
+    /* Alert */
+    .alert-blue {
+        background-color: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e40af;
+        border-radius: 8px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 </style>
 @endpush
 
 @section('content')
+<div class="container py-5">
 
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{{ route('perawat.drh') }}" class="btn btn-sm btn-outline-secondary px-3" style="border-radius: 8px; font-size: 12px;">
-            <i class="bi bi-arrow-left"></i> Kembali ke DRH
-        </a>
+    {{-- Header --}}
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Riwayat Pendidikan</h1>
+            <p class="page-subtitle">Kelola data pendidikan formal dan akademik Anda.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('perawat.drh') }}" class="btn-white">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+            <a href="{{ route('perawat.pendidikan.create') }}" class="btn-blue">
+                <i class="bi bi-plus-lg"></i> Tambah Pendidikan
+            </a>
+        </div>
     </div>
 
-    <div class="content-card">
-        
-        @if($errors->any())
-            <div class="alert alert-danger py-2 px-3 small rounded-3 mb-4 border-0 bg-danger-subtle text-danger">
-                <ul class="mb-0 ps-3">
-                    @foreach($errors->all() as $e)
-                        <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        {{-- FORM TAMBAH --}}
-        <div class="p-3 mb-4 rounded-3" style="background-color: #f8fafc; border: 1px dashed var(--border-soft);">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="m-0" style="font-size: 14px; color: var(--blue-main); font-weight: 600;">
-                    + Tambah Data Pendidikan
-                </h6>
-            </div>
-            
-            <form action="{{ route('perawat.pendidikan.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                {{-- Baris 1: Info Institusi --}}
-                <div class="row g-3 mb-2">
-                    <div class="col-md-2">
-                        <label class="form-label">Jenjang <span class="text-danger">*</span></label>
-                        <input type="text" name="jenjang" class="form-control form-control-custom" placeholder="D3/S1/Ners">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Nama Institusi <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_institusi" class="form-control form-control-custom" placeholder="Nama Universitas/STIKES">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Jurusan</label>
-                        <input type="text" name="jurusan" class="form-control form-control-custom" placeholder="Ilmu Keperawatan">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Tempat</label>
-                        <input type="text" name="tempat" class="form-control form-control-custom" placeholder="Kota">
-                    </div>
-                </div>
-
-                {{-- Baris 2: Detail Akademik --}}
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-2">
-                        <label class="form-label">Akreditasi</label>
-                        <input type="text" name="akreditasi" class="form-control form-control-custom" placeholder="A/B/Unggul">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Thn Masuk</label>
-                        <input type="text" name="tahun_masuk" class="form-control form-control-custom" placeholder="20XX">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Thn Lulus</label>
-                        <input type="text" name="tahun_lulus" class="form-control form-control-custom" placeholder="20XX">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Ijazah (PDF)</label>
-                        <input type="file" name="dokumen" class="form-control form-control-custom" style="padding: 5px 8px;">
-                    </div>
-                    <div class="col-md-3 text-end">
-                        <button type="submit" class="btn btn-primary btn-sm px-4 w-100" style="border-radius: 8px; background: var(--blue-main); border: none;">
-                            Simpan Data
-                        </button>
-                    </div>
-                </div>
-            </form>
+    {{-- Alert --}}
+    @if(session('success'))
+        <div class="alert-blue">
+            <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
         </div>
+    @endif
 
-        {{-- TABEL LIST --}}
+    {{-- Content Card --}}
+    <div class="table-card">
         <div class="table-responsive">
-            <table class="table table-custom table-hover mb-0">
+            <table class="custom-table">
                 <thead>
                     <tr>
-                        <th style="width:40px;">No</th>
-                        <th style="width:25%;">Jenjang & Institusi</th>
-                        <th>Akreditasi</th>
-                        <th>Tempat</th>
-                        <th>Jurusan</th>
-                        <th>Masuk</th>
-                        <th>Lulus</th>
-                        <th>Dokumen</th>
-                        <th style="width:140px;">Aksi</th>
+                        <th width="30%">Jenjang & Institusi</th>
+                        <th width="20%">Jurusan</th>
+                        <th width="20%">Lokasi & Akreditasi</th>
+                        <th width="15%">Periode</th>
+                        <th width="10%">Dokumen</th>
+                        <th width="10%" class="text-end">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($pendidikan as $i => $row)
                         <tr>
-                            <td class="text-center text-muted">{{ $i+1 }}</td>
-                            
-                            {{-- Form Update Inline (Colspan harus 8: Total kolom 9 dikurangi kolom No) --}}
-                            <td colspan="8" class="p-0">
-                                <form action="{{ route('perawat.pendidikan.update',$row->id) }}" method="POST" enctype="multipart/form-data">
-                                    @csrf
-                                    {{-- Table Trick untuk Alignment --}}
-                                    <table class="w-100 m-0 bg-transparent">
-                                        <tr>
-                                            <td style="border:none; width: 25%;">
-                                                <input type="text" name="jenjang" value="{{ $row->jenjang }}" class="form-control form-control-custom mb-1 fw-bold" placeholder="Jenjang">
-                                                <input type="text" name="nama_institusi" value="{{ $row->nama_institusi }}" class="form-control form-control-custom text-muted" style="font-size: 11px;" placeholder="Institusi">
-                                            </td>
-                                            <td style="border:none;">
-                                                <input type="text" name="akreditasi" value="{{ $row->akreditasi }}" class="form-control form-control-custom text-center">
-                                            </td>
-                                            <td style="border:none;">
-                                                <input type="text" name="tempat" value="{{ $row->tempat }}" class="form-control form-control-custom">
-                                            </td>
-                                            <td style="border:none;">
-                                                <input type="text" name="jurusan" value="{{ $row->jurusan }}" class="form-control form-control-custom">
-                                            </td>
-                                            <td style="border:none; width: 70px;">
-                                                <input type="text" name="tahun_masuk" value="{{ $row->tahun_masuk }}" class="form-control form-control-custom text-center">
-                                            </td>
-                                            <td style="border:none; width: 70px;">
-                                                <input type="text" name="tahun_lulus" value="{{ $row->tahun_lulus }}" class="form-control form-control-custom text-center">
-                                            </td>
-                                            <td style="border:none;">
-                                                <div class="d-flex flex-column gap-1" style="font-size: 11px;">
-                                                    <input type="file" name="dokumen" class="form-control form-control-custom" style="padding: 4px; font-size: 10px;">
-                                                    @if($row->dokumen_path)
-                                                        <a href="{{ asset('storage/'.$row->dokumen_path) }}" target="_blank" class="text-decoration-none text-primary">
-                                                            <i class="bi bi-file-earmark-pdf"></i> File
-                                                        </a>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td style="border:none; width: 140px;">
-                                                <div class="d-flex gap-2 justify-content-end">
-                                                    <button type="submit" class="btn btn-action btn-outline-primary" title="Simpan">
-                                                        <i class="bi bi-check-lg"></i>
-                                                    </button>
-                                </form> 
-                                                    <form action="{{ route('perawat.pendidikan.destroy',$row->id) }}" method="POST" onsubmit="return confirm('Hapus data ini?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-action btn-outline-danger" title="Hapus">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                
+                            {{-- Jenjang & Institusi --}}
+                            <td>
+                                <span class="badge-soft">{{ $row->jenjang }}</span>
+                                <span class="data-title">{{ $row->nama_institusi }}</span>
+                            </td>
+
+                            {{-- Jurusan --}}
+                            <td>
+                                <span class="text-dark fw-medium">{{ $row->jurusan }}</span>
+                            </td>
+
+                            {{-- Tempat & Akreditasi --}}
+                            <td>
+                                <span class="d-block text-dark fw-medium mb-1">{{ $row->tempat }}</span>
+                                <span class="text-muted small">
+                                    <i class="bi bi-award"></i> Akred: {{ $row->akreditasi ?? '-' }}
+                                </span>
+                            </td>
+
+                            {{-- Periode --}}
+                            <td>
+                                <span class="text-muted small">
+                                    {{ $row->tahun_masuk }} - {{ $row->tahun_lulus }}
+                                </span>
+                            </td>
+
+                            {{-- Dokumen --}}
+                            <td>
+                                @if($row->dokumen_path)
+                                    <a href="{{ asset('storage/'.$row->dokumen_path) }}" target="_blank" class="link-blue">
+                                        <i class="bi bi-file-earmark-pdf"></i> Ijazah
+                                    </a>
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
+
+                            {{-- Aksi --}}
+                            <td class="text-end">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{{ route('perawat.pendidikan.edit', $row->id) }}" class="action-btn" title="Edit">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+
+                                    <form action="{{ route('perawat.pendidikan.destroy', $row->id) }}" method="POST" onsubmit="return confirm('Hapus data pendidikan ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="action-btn delete" title="Hapus">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-5"> {{-- Colspan 9 sesuai total header --}}
-                                <div class="text-muted mb-2">
-                                    <i class="bi bi-mortarboard display-6 opacity-25"></i>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted" style="opacity: 0.6;">
+                                    <i class="bi bi-mortarboard fs-1 d-block mb-2"></i>
+                                    Belum ada data pendidikan.
                                 </div>
-                                <span class="text-muted small">Belum ada data riwayat pendidikan.</span>
                             </td>
                         </tr>
                     @endforelse
@@ -226,4 +315,6 @@
             </table>
         </div>
     </div>
+
+</div>
 @endsection
