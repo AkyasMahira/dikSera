@@ -21,7 +21,6 @@ Route::get('/register/perawat', [AuthController::class, 'showPerawatRegisterForm
 Route::post('/register/perawat', [AuthController::class, 'registerPerawat'])->name('register.perawat.process');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (Harus Login)
@@ -34,7 +33,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('dashboard/admin', [DashboardController::class, 'adminIndex'])->name('dashboard.admin');
 
     // === GROUP ADMIN ===
-    // Tambahkan middleware role:admin jika sudah punya, untuk keamanan ganda
     Route::prefix('admin')->name('admin.')->group(function(){
         Route::get('/perawat', [AdminPerawatController::class, 'index'])->name('perawat.index');
         Route::get('/perawat/{id}', [AdminPerawatController::class, 'show'])->name('perawat.show');
@@ -44,7 +42,6 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // === GROUP PERAWAT ===
-    // Tambahkan middleware role:perawat jika sudah punya
     Route::prefix('perawat')->name('perawat.')->group(function () {
 
         // DRH Summary
@@ -54,8 +51,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/drh/identitas', [PerawatDrhController::class, 'editIdentitas'])->name('identitas.edit');
         Route::post('/drh/identitas', [PerawatDrhController::class, 'updateIdentitas'])->name('identitas.update');
 
-        // Data Lengkap (PERBAIKAN NAMA DISINI)
-        // Nama route otomatis jadi: perawat.data.lengkap
+        // Data Lengkap
         Route::get('/drh/data-lengkap', [PerawatDrhController::class, 'showDataLengkap'])->name('data.lengkap');
 
         // === PENDIDIKAN ===
