@@ -558,6 +558,11 @@
                                 <i class="bi bi-person-vcard-fill"></i> DRH & Profil
                             </a>
 
+                            <a href="{{ route('perawat.pendidikan.index') }}"
+                                class="nav-linkx {{ request()->routeIs('perawat.pendidikan.*') ? 'active' : '' }}">
+                                <i class="bi bi-mortarboard-fill"></i> Pendidikan
+                            </a>
+
                             <a href="{{ route('perawat.pelatihan.index') }}"
                                 class="nav-linkx {{ request()->routeIs('perawat.pelatihan.*') ? 'active' : '' }}">
                                 <i class="bi bi-award-fill"></i> Pelatihan
