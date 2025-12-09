@@ -582,6 +582,11 @@
                                 class="nav-linkx {{ request()->routeIs('perawat.tandajasa.*') ? 'active' : '' }}">
                                 <i class="bi bi-star-fill"></i> Tanda Jasa
                             </a>
+
+                             <a href="{{ route('perawat.lisensi.index') }}"
+                                class="nav-linkx {{ request()->routeIs('perawat.tandajasa.*') ? 'active' : '' }}">
+                                <i class="bi bi-star-fill"></i> Dokumen Lisensi
+                            </a>
                         </div>
 
                         <div class="nav-section-title">Lainnya</div>
