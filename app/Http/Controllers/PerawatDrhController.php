@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PerawatCertificate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk manajemen file
@@ -734,5 +735,108 @@ class PerawatDrhController extends Controller
         return redirect()->route('perawat.tandajasa.index')->with('swal',[
             'icon'=>'success','title'=>'Berhasil','text'=>'Tanda jasa dihapus.'
         ]);
+    }
+
+    // MANAJEMEN SERTIFIKAT PERAWAT
+    public function certificatesIndex()
+    {
+        // Menampilkan semua sertifikat milik user yang sedang login
+        $certificates = PerawatCertificate::where('user_id', Auth::id())
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+
+        // Sesuaikan path view dengan struktur folder Anda
+        return view('perawat.certificates.index', compact('certificates'));
+    }
+
+    public function certificatesCreate()
+    {
+        // Menampilkan form tambah sertifikat
+        return view('perawat.certificates.create');
+    }
+
+    public function certificatesStore(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'nama'            => 'required|string|max:255',
+            'lembaga'         => 'required|string|max:255',
+            'tanggal_mulai'   => 'required|date',
+            'tanggal_akhir'   => 'required|date|after_or_equal:tanggal_mulai',
+            'file_sertifikat' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048', // Max 2MB
+            'keterangan'      => 'nullable|string'
+        ]);
+
+        // Proses Upload File
+        if ($request->hasFile('file_sertifikat')) {
+            $filePath = $request->file('file_sertifikat')->store('certificates', 'public');
+        }
+
+        // Simpan ke Database
+        PerawatCertificate::create([
+            'user_id'       => Auth::id(),
+            'nama'          => $request->nama,
+            'lembaga'       => $request->lembaga,
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_akhir' => $request->tanggal_akhir,
+            'file_path'     => $filePath, // Path yang disimpan dari storage
+            'keterangan'    => $request->keterangan,
+        ]);
+
+        return redirect()->route('perawat.certificates.index')->with('success', 'Sertifikat berhasil ditambahkan.');
+    }
+
+    public function certificatesEdit($id)
+    {
+        // Cari data dan pastikan milik user yang login
+        $certificate = PerawatCertificate::where('user_id', Auth::id())->findOrFail($id);
+
+        return view('perawat.certificates.edit', compact('certificate'));
+    }
+
+    public function certificatesUpdate(Request $request, $id)
+    {
+        $certificate = PerawatCertificate::where('user_id', Auth::id())->findOrFail($id);
+
+        $request->validate([
+            'nama'            => 'required|string|max:255',
+            'lembaga'         => 'required|string|max:255',
+            'tanggal_mulai'   => 'required|date',
+            'tanggal_akhir'   => 'required|date|after_or_equal:tanggal_mulai',
+            'file_sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048', // Nullable karena update tidak wajib ganti file
+            'keterangan'      => 'nullable|string'
+        ]);
+
+        $data = $request->except(['file_sertifikat']);
+
+        // Cek jika ada file baru yang diupload
+        if ($request->hasFile('file_sertifikat')) {
+            // 1. Hapus file lama fisik jika ada
+            if ($certificate->file_path && Storage::disk('public')->exists($certificate->file_path)) {
+                Storage::disk('public')->delete($certificate->file_path);
+            }
+            
+            // 2. Upload file baru
+            $data['file_path'] = $request->file('file_sertifikat')->store('certificates', 'public');
+        }
+
+        $certificate->update($data);
+
+        return redirect()->route('perawat.certificates.index')->with('success', 'Sertifikat berhasil diperbarui.');
+    }
+
+    public function certificatesDestroy($id)
+    {
+        $certificate = PerawatCertificate::where('user_id', Auth::id())->findOrFail($id);
+
+        // Hapus file fisik dari storage
+        if ($certificate->file_path && Storage::disk('public')->exists($certificate->file_path)) {
+            Storage::disk('public')->delete($certificate->file_path);
+        }
+
+        // Hapus record database
+        $certificate->delete();
+
+        return redirect()->route('perawat.certificates.index')->with('success', 'Sertifikat berhasil dihapus.');
     }
 }

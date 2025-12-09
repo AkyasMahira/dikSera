@@ -101,6 +101,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/tanda-jasa/{id}/edit', [PerawatDrhController::class, 'tandajasaEdit'])->name('tandajasa.edit');
         Route::put('/tanda-jasa/{id}', [PerawatDrhController::class, 'tandajasaUpdate'])->name('tandajasa.update');
         Route::delete('/tanda-jasa/{id}', [PerawatDrhController::class, 'tandajasaDestroy'])->name('tandajasa.destroy');
+
+        // == Certificates ==
+        Route::get('/sertifikat', [PerawatDrhController::class, 'certificatesIndex'])->name('certificates.index');
+        Route::get('/sertifikat/create', [PerawatDrhController::class, 'certificatesCreate'])->name('certificates.create');
+        Route::post('/sertifikat', [PerawatDrhController::class, 'certificatesStore'])->name('certificates.store');
+        Route::get('/sertifikat/{id}/edit', [PerawatDrhController::class, 'certificatesEdit'])->name('certificates.edit');
+        Route::put('/sertifikat/{id}', [PerawatDrhController::class, 'certificatesUpdate'])->name('certificates.update');
+        Route::delete('/sertifikat/{id}', [PerawatDrhController::class, 'certificatesDestroy'])->name('certificates.destroy');
     });
 
 });
