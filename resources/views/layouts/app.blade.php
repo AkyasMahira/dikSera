@@ -627,9 +627,9 @@
                         </div>
 
                         <div class="nav-section-title">Lainnya</div>
-                        <a href="#" class="nav-linkx">
+                        <a href="{{ route('perawat.telegram.link') }}" class="nav-linkx">
                             <i class="bi bi-gear-fill"></i>
-                            <span class="link-text">Pengaturan</span>
+                            <span class="link-text">Telegram</span>
                         </a>
                     @endif
 
