@@ -4,123 +4,132 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\User; // Import Model User
 
 class TelegramService
 {
     protected $botToken;
-    protected $chatId;
 
     public function __construct()
     {
         $this->botToken = env('TELEGRAM_BOT_TOKEN');
-        $this->chatId = env('TELEGRAM_CHAT_ID');
     }
 
     /**
-     * Kirim pesan ke Telegram
+     * Helper internal untuk kirim request ke Telegram
      */
-    public function sendMessage($message)
+    private function executeSendMessage($chatId, $message)
     {
-        if (empty($this->botToken) || empty($this->chatId)) {
-            Log::warning('Telegram configuration is missing');
+        if (empty($this->botToken) || empty($chatId)) {
             return false;
         }
 
         try {
-            $url = "https://api.telegram.org/bot{$this->botToken}/sendMessage";
-
-            $response = Http::post($url, [
-                'chat_id' => $this->chatId,
+            $response = Http::post("https://api.telegram.org/bot{$this->botToken}/sendMessage", [
+                'chat_id' => $chatId,
                 'text' => $message,
                 'parse_mode' => 'HTML'
             ]);
 
-            if ($response->successful()) {
-                Log::info('Telegram notification sent successfully');
-                return true;
-            } else {
-                Log::error('Failed to send Telegram notification: ' . $response->body());
-                return false;
-            }
+            return $response->successful();
         } catch (\Exception $e) {
-            Log::error('Telegram notification error: ' . $e->getMessage());
+            Log::error("Telegram Error (ID: $chatId): " . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Format pesan untuk notifikasi sertifikat kadaluarsa
+     * 1. Notifikasi untuk ADMIN (Broadcast ke semua Admin)
+     * Dipanggil oleh: notifySertifikatExpiring di Command
      */
-    public function notifySertifikatExpiring($user, $sertifikat, $tipeSertifikat, $daysLeft)
+    public function notifySertifikatExpiring($nurseUser, $sertifikat, $tipeSertifikat, $daysLeft)
     {
-        $status = $daysLeft <= 0 ? '🔴 SUDAH KADALUARSA' : '⚠️ AKAN KADALUARSA';
+        // Cari semua admin yang sudah connect telegram
+        $admins = User::where('role', 'admin')
+            ->whereNotNull('telegram_chat_id')
+            ->get();
 
-        $message = "<b>🚨 REMINDER SERTIFIKAT {$tipeSertifikat}</b>\n\n";
-        $message .= "<b>Status:</b> {$status}\n";
-        $message .= "<b>Nama Perawat:</b> {$user->name}\n";
-        $message .= "<b>NIK:</b> " . ($user->profile->nik ?? '-') . "\n";
-        $message .= "<b>No HP:</b> " . ($user->profile->no_hp ?? '-') . "\n\n";
-
-        $message .= "<b>Detail Sertifikat:</b>\n";
-        $message .= "• Nomor: {$sertifikat->nomor}\n";
-        $message .= "• Nama: {$sertifikat->nama}\n";
-        $message .= "• Lembaga: {$sertifikat->lembaga}\n";
-        $message .= "• Tanggal Terbit: " . date('d/m/Y', strtotime($sertifikat->tgl_terbit)) . "\n";
-        $message .= "• Tanggal Expired: " . date('d/m/Y', strtotime($sertifikat->tgl_expired)) . "\n";
-
-        if ($daysLeft > 0) {
-            $message .= "\n⏰ Sisa waktu: <b>{$daysLeft} hari</b>";
-        } else {
-            $message .= "\n❌ Sudah lewat: <b>" . abs($daysLeft) . " hari</b>";
+        if ($admins->isEmpty()) {
+            return false; // Tidak ada admin yang bisa dikirim
         }
 
-        $message .= "\n\n📝 Segera lakukan perpanjangan!";
+        // Format Pesan Khusus Admin (Lebih Detail dengan Nama Perawat)
+        $status = $this->getStatusText($daysLeft);
+        $tglExp = date('d/m/Y', strtotime($sertifikat->tgl_expired ?? $sertifikat->tgl_berakhir ?? now()));
 
-        return $this->sendMessage($message);
+        $message = "<b>🚨 LAPORAN DOKUMEN PERAWAT</b>\n\n";
+        $message .= "<b>Perawat:</b> {$nurseUser->name}\n";
+        $message .= "<b>NIK:</b> " . ($nurseUser->profile->nik ?? '-') . "\n\n";
+
+        $message .= "<b>Jenis:</b> {$tipeSertifikat}\n";
+        $message .= "<b>Nomor:</b> {$sertifikat->nomor}\n";
+        $message .= "<b>Expired:</b> {$tglExp}\n";
+        $message .= "<b>Status:</b> {$status}\n\n";
+        $message .= "<i>Mohon konfirmasi ke perawat terkait.</i>";
+
+        // Loop kirim ke semua admin
+        $successCount = 0;
+        foreach ($admins as $admin) {
+            if ($this->executeSendMessage($admin->telegram_chat_id, $message)) {
+                $successCount++;
+            }
+        }
+
+        return $successCount > 0;
+    }
+
+    /**
+     * 2. Notifikasi untuk USER/PERAWAT (Personal)
+     * Dipanggil oleh: notifySertifikatExpiringToUser di Command
+     */
+    public function notifySertifikatExpiringToUser($chatId, $sertifikat, $tipeSertifikat, $daysLeft)
+    {
+        // Format Pesan Personal
+        $status = $this->getStatusText($daysLeft);
+        $tglExp = date('d/m/Y', strtotime($sertifikat->tgl_expired ?? $sertifikat->tgl_berakhir ?? now()));
+
+        $message = "<b>🔔 PENGINGAT MASA BERLAKU</b>\n\n";
+        $message .= "Halo, dokumen <b>{$tipeSertifikat}</b> Anda membutuhkan perhatian.\n\n";
+        $message .= "<b>Nomor:</b> {$sertifikat->nomor}\n";
+        $message .= "<b>Expired:</b> {$tglExp}\n";
+        $message .= "<b>Status:</b> {$status}\n\n";
+
+        if ($daysLeft <= 0) {
+            $message .= "⛔ <b>Dokumen sudah tidak aktif.</b> Segera urus perpanjangan.";
+        } else {
+            $message .= "📝 Segera lakukan perpanjangan sebelum tanggal tersebut.";
+        }
+
+        return $this->executeSendMessage($chatId, $message);
+    }
+
+    /**
+     * Helper Status Text
+     */
+    private function getStatusText($daysLeft)
+    {
+        if ($daysLeft < 0) return "🔴 SUDAH KADALUARSA (" . abs($daysLeft) . " hari lalu)";
+        if ($daysLeft == 0) return "🔴 HARI INI KADALUARSA";
+        if ($daysLeft <= 3) return "🔴 KRITIS (Sisa {$daysLeft} hari)";
+        if ($daysLeft <= 30) return "🟠 AKAN HABIS (Sisa {$daysLeft} hari)";
+        return "⚠️ REMINDER (Sisa {$daysLeft} hari)";
+    }
+
+    /**
+     * Fungsi Verifikasi 
+     */
+    public function sendMessage($message)
+    {
+        return false;
     }
 
     public function sendVerificationCode($chatId, $code)
     {
         $message = "🔐 <b>Kode Verifikasi Telegram</b>\n\n";
         $message .= "Kode Anda: <code>{$code}</code>\n\n";
-        $message .= "Masukkan kode ini di halaman pengaturan untuk menghubungkan akun Telegram Anda.\n";
+        $message .= "Masukkan kode ini di aplikasi untuk menghubungkan akun.\n";
         $message .= "Kode berlaku 15 menit.";
 
-        $url = "https://api.telegram.org/bot{$this->botToken}/sendMessage";
-
-        return Http::post($url, [
-            'chat_id' => $chatId,
-            'text' => $message,
-            'parse_mode' => 'HTML'
-        ])->successful();
-    }
-
-    public function notifySertifikatExpiringToUser($chatId, $sertifikat, $tipeSertifikat, $daysLeft)
-    {
-        // Same as notifySertifikatExpiring but send to specific chat_id
-        $status = $daysLeft <= 0 ? '🔴 SUDAH KADALUARSA' : '⚠️ AKAN KADALUARSA';
-
-        $message = "<b>🚨 REMINDER SERTIFIKAT {$tipeSertifikat}</b>\n\n";
-        $message .= "<b>Status:</b> {$status}\n";
-        $message .= "<b>Detail Sertifikat:</b>\n";
-        $message .= "• Nomor: {$sertifikat->nomor}\n";
-        $message .= "• Nama: {$sertifikat->nama}\n";
-        $message .= "• Tanggal Expired: " . date('d/m/Y', strtotime($sertifikat->tgl_expired)) . "\n";
-
-        if ($daysLeft > 0) {
-            $message .= "\n⏰ Sisa waktu: <b>{$daysLeft} hari</b>";
-        } else {
-            $message .= "\n❌ Sudah lewat: <b>" . abs($daysLeft) . " hari</b>";
-        }
-
-        $message .= "\n\n📝 Segera lakukan perpanjangan!";
-
-        $url = "https://api.telegram.org/bot{$this->botToken}/sendMessage";
-
-        return Http::post($url, [
-            'chat_id' => $chatId,
-            'text' => $message,
-            'parse_mode' => 'HTML'
-        ])->successful();
+        return $this->executeSendMessage($chatId, $message);
     }
 }

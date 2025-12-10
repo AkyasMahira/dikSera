@@ -31,7 +31,7 @@ class AdminProfileController extends Controller
         return response()->json([
             'success' => true,
             'code' => $code,
-            'bot_username' => env('TELEGRAM_BOT_USERNAME'), // Pastikan ada di .env
+            'bot_username' => env('TELEGRAM_BOT_USERNAME'), 
             'expires_at' => $user->telegram_verification_expires_at->format('H:i')
         ]);
     }
