@@ -9,17 +9,51 @@ use Illuminate\Http\Request;
 class ManajemenAkunController extends Controller
 {
     /**
-     * Menampilkan daftar user (Perawat)
+     * Menampilkan daftar user (Perawat) dengan search, filter & pagination
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil user yang role-nya BUKAN admin (hanya perawat/user biasa)
-        // Urutkan dari yang terbaru
-        $users = User::where('role', '!=', 'admin')
-                     ->orderBy('created_at', 'desc')
-                     ->get();
+        // Ambil query parameter
+        $search = $request->input('search');
+        $status = $request->input('status_akun');
+        $role   = $request->input('role');
 
-        return view('admin.manajemen_akun.index', compact('users'));
+        // Base query: selain admin
+        $query = User::where('role', '!=', 'admin');
+
+        // Filter search: name / email / nik (via relasi profile)
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('profile', function ($sub) use ($search) {
+                      $sub->where('nik', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter status akun
+        if (!empty($status) && in_array($status, ['active', 'rejected', 'pending'])) {
+            $query->where('status_akun', $status);
+        }
+
+        // Filter role
+        if (!empty($role)) {
+            $query->where('role', $role);
+        }
+
+        // Urutkan & paginate
+        $users = $query->orderBy('created_at', 'desc')
+                       ->paginate(10)            // jumlah per halaman
+                       ->withQueryString();     // pertahankan query di URL
+
+        // Ambil daftar role unik (untuk dropdown filter)
+        $roles = User::where('role', '!=', 'admin')
+                     ->select('role')
+                     ->distinct()
+                     ->pluck('role');
+
+        return view('admin.manajemen_akun.index', compact('users', 'roles'));
     }
 
     /**

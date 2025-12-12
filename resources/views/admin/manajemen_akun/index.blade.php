@@ -2,7 +2,6 @@
 
 @section('title', 'Manajemen Akun Pengguna')
 
-{{-- 1. BAGIAN CSS (Sama persis dengan Code 2, ditambah style untuk Badge Status) --}}
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -34,6 +33,8 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
     }
 
     .page-title {
@@ -109,7 +110,7 @@
         gap: 5px;
     }
 
-    /* --- Custom Badges (Agar seragam dengan desain) --- */
+    /* --- Custom Badges --- */
     .status-badge {
         padding: 6px 12px;
         border-radius: 20px;
@@ -138,7 +139,6 @@
         cursor: pointer;
     }
 
-    /* Warna khusus tombol aksi */
     .action-btn.approve:hover { background: var(--success-bg); color: var(--success-text); }
     .action-btn.reject:hover { background: var(--danger-bg); color: var(--danger-text); }
     .action-btn.delete:hover { background: #fee2e2; color: #ef4444; }
@@ -155,27 +155,82 @@
         align-items: center;
         gap: 10px;
     }
+
+    /* Filter bar */
+    .filter-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+    }
 </style>
 @endpush
 
 @section('content')
 <div class="container py-5">
 
-    {{-- 2. HEADER HALAMAN --}}
+    {{-- 1. HEADER HALAMAN --}}
     <div class="page-header">
         <div>
             <h1 class="page-title">Manajemen Akun</h1>
             <p class="page-subtitle">Daftar registrasi dan persetujuan akun pengguna.</p>
         </div>
-        {{-- Jika ingin ada tombol filter/export bisa diletakkan di sini --}}
     </div>
 
-    {{-- 3. ALERT NOTIFIKASI --}}
+    {{-- 2. ALERT NOTIFIKASI --}}
     @if(session('swal'))
         <div class="alert-blue">
             <i class="bi bi-info-circle-fill"></i> {{ session('swal')['text'] ?? 'Berhasil update data' }}
         </div>
     @endif
+
+    {{-- 3. FILTER & SEARCH --}}
+    <div class="filter-card">
+        <form method="GET" action="{{ route('admin.manajemen_akun.index') }}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label mb-1 small text-muted">Cari</label>
+                <input type="text"
+                       name="search"
+                       class="form-control form-control-sm"
+                       placeholder="Cari nama / email / NIK..."
+                       value="{{ request('search') }}">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label mb-1 small text-muted">Status Akun</label>
+                <select name="status_akun" class="form-select form-select-sm">
+                    <option value="">Semua Status</option>
+                    <option value="pending"  {{ request('status_akun') == 'pending' ? 'selected' : '' }}>Menunggu</option>
+                    <option value="active"   {{ request('status_akun') == 'active' ? 'selected' : '' }}>Disetujui</option>
+                    <option value="rejected" {{ request('status_akun') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label mb-1 small text-muted">Role</label>
+                <select name="role" class="form-select form-select-sm">
+                    <option value="">Semua Role</option>
+                    @if(isset($roles) && $roles->count())
+                        @foreach($roles as $r)
+                            <option value="{{ $r }}" {{ request('role') == $r ? 'selected' : '' }}>
+                                {{ ucfirst($r) }}
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+                <a href="{{ route('admin.manajemen_akun.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
 
     {{-- 4. KONTEN TABEL --}}
     <div class="table-card">
@@ -194,7 +249,10 @@
                 <tbody>
                     @forelse($users as $user)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
+                        {{-- Nomor mengikuti pagination --}}
+                        <td>
+                            {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
+                        </td>
 
                         {{-- Kolom Nama & Email --}}
                         <td>
@@ -224,7 +282,7 @@
                             </div>
                         </td>
 
-                        {{-- Kolom Status (Menggunakan Style Baru) --}}
+                        {{-- Kolom Status --}}
                         <td>
                             @if($user->status_akun == 'active')
                                 <span class="status-badge active">
@@ -259,11 +317,11 @@
 
                                 {{-- Tombol Reject --}}
                                 @if($user->status_akun != 'rejected')
-                                <form action="{{ route('admin.manajemen_akun.update', $user->id) }}" method="POST">
+                                <form action="{{ route('admin.manajemen_akun.update', $user->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menolak akun ini?')">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="status_akun" value="rejected">
-                                    <button type="submit" class="action-btn reject" title="Tolak (Reject)" onclick="return confirm('Yakin ingin menolak akun ini?')">
+                                    <button type="submit" class="action-btn reject" title="Tolak (Reject)">
                                         <i class="bi bi-x-lg fs-6"></i>
                                     </button>
                                 </form>
@@ -293,6 +351,27 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- 5. PAGINATION --}}
+        @if($users->hasPages())
+            <div class="px-3 py-2">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="small text-muted">
+                        Menampilkan
+                        <strong>{{ $users->firstItem() }}</strong>
+                        -
+                        <strong>{{ $users->lastItem() }}</strong>
+                        dari
+                        <strong>{{ $users->total() }}</strong>
+                        data
+                    </div>
+                    <div>
+                        {{ $users->links('pagination::bootstrap-5') }}
+                        {{-- kalau nggak pakai bootstrap, bisa pakai: {{ $users->links() }} --}}
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
 </div>
