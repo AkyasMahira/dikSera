@@ -26,7 +26,7 @@ class AdminPerawatController extends Controller
         $search = $request->input('search');
 
         $perawat = User::where('role', 'perawat')
-            ->with('profile')
+            ->with(['profile', 'strs', 'sips', 'lisensis', 'dataTambahans'])
             ->when($search, function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                     ->orWhereHas('profile', function ($q) use ($search) {
@@ -39,8 +39,39 @@ class AdminPerawatController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Hitung jumlah dokumen expired untuk setiap perawat
+        $now = now();
+        foreach ($perawat as $p) {
+            $p->expired_docs_count = self::countExpiredDocuments($p, $now);
+        }
+
         return view('admin.perawat.index', compact('perawat', 'search'));
     }
+
+    /**
+     * Hitung jumlah dokumen expired untuk 1 user
+     * @param \App\Models\User $user
+     * @param \Carbon\Carbon $now
+     * @return int
+     */
+    public static function countExpiredDocuments($user, $now)
+    {
+        $count = 0;
+        if ($user->relationLoaded('strs')) {
+            $count += $user->strs->where('tgl_expired', '<', $now)->count();
+        }
+        if ($user->relationLoaded('sips')) {
+            $count += $user->sips->where('tgl_expired', '<', $now)->count();
+        }
+        if ($user->relationLoaded('lisensis')) {
+            $count += $user->lisensis->where('tgl_expired', '<', $now)->count();
+        }
+        if ($user->relationLoaded('dataTambahans')) {
+            $count += $user->dataTambahans->where('tgl_expired', '<', $now)->count();
+        }
+        return $count;
+    }
+
 
     // DETAIL DRH PER PERAWAT
     public function show($id)
