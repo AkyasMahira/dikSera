@@ -16,18 +16,15 @@ class FormController extends Controller
         return view('admin.form.index', compact('forms'));
     }
 
-public function create()
-{
-    $users = User::where('role', 'perawat')->get();
-    $users = $users->sortByDesc(function ($user) {
-        if (empty($user->tgl_expired)) {
-            return 0;
-        }
-        return $user->tgl_expired <= now()->addMonth();
-    });
+    public function create()
+    {
+        $users = User::where('role', 'perawat')->get();
+        $users = $users->sortByDesc(function ($user) {
+            return count($user->dokumen_warning) > 0;
+        });
 
-    return view('admin.form.create', compact('users'));
-}
+        return view('admin.form.create', compact('users'));
+    }
 
     public function store(Request $request)
     {

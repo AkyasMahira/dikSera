@@ -220,63 +220,56 @@
                         </div>
                     </div>
 
-                    {{-- 4. Daftar Peserta (Hidden by Default) --}}
-                    <div id="list-peserta-container" class="mb-4" style="display: none;">
-                        <div class="d-flex justify-content-between align-items-end mb-2">
-                            <label class="form-label mb-0">Pilih Perawat</label>
-                            <small class="text-danger fw-bold" style="font-size: 11px;">
-                                <i class="bi bi-exclamation-circle-fill"></i> Merah = Dokumen Expired < 1 Bulan </small>
+                    {{-- Daftar Peserta --}}
+                    <div id="list-peserta-container" class="card p-3 bg-light border-0 mb-4" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label text-muted small mb-0">Silakan centang perawat yang diizinkan:</label>
+                            <small class="text-danger fw-bold" style="font-size: 0.75rem;">
+                                <i class="bi bi-exclamation-circle-fill"></i> Dokumen mau/sudah expired
+                            </small>
                         </div>
 
-                        <div class="bg-light p-3 rounded-3 border">
-                            <div class="custom-scroll">
-                                <div class="row g-2">
-                                    @foreach ($users as $user)
-                                        @php
-                                            // Logika Urgent (Dokumen Expired)
-                                            $isUrgent =
-                                                !empty($user->tgl_expired) && $user->tgl_expired <= now()->addMonth();
-                                        @endphp
+                        <div class="row" style="max-height: 300px; overflow-y: auto;">
+                            @foreach ($users as $user)
+                                @php
+                                    // Panggil accessor yang kita buat di Model tadi
+                                    $warnings = $user->dokumen_warning;
+                                    $isUrgent = count($warnings) > 0;
 
-                                        <div class="col-md-6">
-                                            <div
-                                                class="participant-item d-flex align-items-center gap-2 {{ $isUrgent ? 'urgent' : '' }}">
-                                                <input class="form-check-input m-0" type="checkbox" name="participants[]"
-                                                    value="{{ $user->id }}" id="user_{{ $user->id }}"
-                                                    style="cursor: pointer;">
+                                    $bgClass = $isUrgent ? 'bg-warning-subtle border-warning' : '';
+                                    $textClass = $isUrgent ? 'text-dark fw-bold' : 'text-secondary';
+                                @endphp
 
-                                                <label class="form-check-label w-100 cursor-pointer"
-                                                    for="user_{{ $user->id }}" style="cursor: pointer;">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <span class="fw-bold {{ $isUrgent ? 'text-danger' : 'text-dark' }}"
-                                                            style="font-size: 13px;">{{ $user->name }}</span>
-                                                        @if ($isUrgent)
-                                                            <i class="bi bi-exclamation-circle-fill text-danger"
-                                                                title="Dokumen Expired" data-bs-toggle="tooltip"></i>
-                                                        @endif
-                                                    </div>
-                                                    <div class="text-muted d-flex justify-content-between"
-                                                        style="font-size: 11px;">
-                                                        <span>{{ $user->profile->nik ?? 'NIK: -' }}</span>
-                                                        @if (!empty($user->tgl_expired))
-                                                            <span>Exp:
-                                                                {{ \Carbon\Carbon::parse($user->tgl_expired)->format('d M y') }}</span>
-                                                        @endif
-                                                    </div>
-                                                </label>
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check p-2 rounded {{ $bgClass }}">
+                                        <input class="form-check-input" type="checkbox" name="participants[]"
+                                            value="{{ $user->id }}" id="user_{{ $user->id }}">
+
+                                        <label class="form-check-label w-100 {{ $textClass }}"
+                                            for="user_{{ $user->id }}">
+                                            {{ $user->name }}
+
+                                            {{-- Loop untuk menampilkan Badge dokumen apa saja yang expired --}}
+                                            @if ($isUrgent)
+                                                <div class="mt-1">
+                                                    @foreach ($warnings as $docName)
+                                                        <span class="badge bg-danger"
+                                                            style="font-size: 0.6rem;">{{ $docName }} Exp!</span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            <div class="text-muted fw-normal mt-1" style="font-size: 0.75rem;">
+                                                {{ $user->email ?? $user->nip }}
                                             </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-
-                                @if ($users->isEmpty())
-                                    <div class="text-center text-muted py-4 small">
-                                        <i class="bi bi-person-x display-6"></i><br>
-                                        Tidak ada data perawat ditemukan.
+                                        </label>
                                     </div>
-                                @endif
-                            </div>
+                                </div>
+                            @endforeach
                         </div>
+                        @if ($users->isEmpty())
+                            <div class="text-danger small">Belum ada data perawat di database.</div>
+                        @endif
                     </div>
 
                     {{-- Action Buttons --}}
