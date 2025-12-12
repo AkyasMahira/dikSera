@@ -32,9 +32,43 @@
         </div>
     </td>
     <td>
-        <span class="badge-soft {{ $badgeClass }}">
+        {{-- Status Masa Berlaku --}}
+        <span class="badge-soft {{ $badgeClass }} mb-2 d-inline-flex">
             <i class="bi {{ $icon }}"></i> {{ $text }}
         </span>
+
+        <div class="border-top border-light pt-2 mt-1">
+            {{-- Label Status --}}
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="text-muted" style="font-size: 10px;">Verifikasi:</span>
+                <span class="badge-soft badge-soft-secondary status-kelayakan-{{ $item->id }}">
+                    <span class="fw-bold text-uppercase kelayakan-label">{{ $item->kelayakan ?? 'pending' }}</span>
+                </span>
+            </div>
+
+            {{-- Tombol Aksi UI Baru --}}
+            <div class="verify-actions">
+                <button type="button" class="btn-verify btn-verify-success btn-kelayakan"
+                    data-id="{{ $item->id }}"
+                    data-tipe="{{ isset($item->jenis) ? 'tambahan' : (isset($item->nomor) && isset($item->lembaga) ? (str_contains(strtolower($item->nama), 'str') ? 'str' : (str_contains(strtolower($item->nama), 'sip') ? 'sip' : 'lisensi')) : 'lisensi') }}"
+                    data-status="layak" title="Layak">
+                    <i class="bi bi-check-lg"></i>
+                </button>
+
+                <button type="button" class="btn-verify btn-verify-danger btn-kelayakan" data-id="{{ $item->id }}"
+                    data-tipe="{{ isset($item->jenis) ? 'tambahan' : (isset($item->nomor) && isset($item->lembaga) ? (str_contains(strtolower($item->nama), 'str') ? 'str' : (str_contains(strtolower($item->nama), 'sip') ? 'sip' : 'lisensi')) : 'lisensi') }}"
+                    data-status="tidak_layak" title="Tidak Layak">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+
+                <button type="button" class="btn-verify btn-verify-secondary btn-kelayakan"
+                    data-id="{{ $item->id }}"
+                    data-tipe="{{ isset($item->jenis) ? 'tambahan' : (isset($item->nomor) && isset($item->lembaga) ? (str_contains(strtolower($item->nama), 'str') ? 'str' : (str_contains(strtolower($item->nama), 'sip') ? 'sip' : 'lisensi')) : 'lisensi') }}"
+                    data-status="pending" title="Reset">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            </div>
+        </div>
     </td>
     <td class="text-end">
         @if ($item->file_path)
@@ -46,3 +80,37 @@
         @endif
     </td>
 </tr>
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-kelayakan').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var id = this.getAttribute('data-id');
+                    var tipe = this.getAttribute('data-tipe');
+                    var kelayakan = this.getAttribute('data-status');
+                    var row = this.closest('tr');
+                    fetch("{{ route('admin.perawat.verifikasi.kelayakan') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')
+                                    .getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                id: id,
+                                tipe: tipe,
+                                kelayakan: kelayakan
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                row.querySelector('.kelayakan-label').textContent = kelayakan;
+                            }
+                        });
+                });
+            });
+        });
+    </script>
+@endpush

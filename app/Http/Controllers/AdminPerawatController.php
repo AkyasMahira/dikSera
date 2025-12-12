@@ -284,4 +284,34 @@ class AdminPerawatController extends Controller
 
         return view('admin.perawat.sertifikat', compact('user', 'sip', 'str', 'dataTambahan', 'lisensi'));
     }
+
+    // VERIFIKASI KELAYAKAN DOKUMEN
+    public function verifikasiKelayakan(Request $request)
+    {
+        $request->validate([
+            'tipe' => 'required|in:str,sip,lisensi,tambahan',
+            'id' => 'required|integer',
+            'kelayakan' => 'required|in:layak,tidak_layak,pending',
+        ]);
+
+        $model = null;
+        switch ($request->tipe) {
+            case 'str':
+                $model = \App\Models\PerawatStr::findOrFail($request->id);
+                break;
+            case 'sip':
+                $model = \App\Models\PerawatSip::findOrFail($request->id);
+                break;
+            case 'lisensi':
+                $model = \App\Models\PerawatLisensi::findOrFail($request->id);
+                break;
+            case 'tambahan':
+                $model = \App\Models\PerawatDataTambahan::findOrFail($request->id);
+                break;
+        }
+        $model->kelayakan = $request->kelayakan;
+        $model->save();
+
+        return response()->json(['success' => true, 'kelayakan' => $model->kelayakan]);
+    }
 }
