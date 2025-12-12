@@ -370,29 +370,45 @@
                                                     class="fw-bold text-uppercase kelayakan-label">{{ $item->kelayakan ?? 'pending' }}</span>
                                             </span>
                                         </div>
-
-                                        {{-- Tombol Aksi Baru --}}
                                         <div class="verify-actions">
-                                            {{-- Tombol Layak --}}
-                                            <button type="button" class="btn-verify btn-verify-success btn-kelayakan"
-                                                data-id="{{ $item->id }}" data-tipe="tambahan" data-status="layak"
-                                                title="Set Layak">
-                                                <i class="bi bi-check-lg"></i>
-                                            </button>
+                                            {{-- Form Layak --}}
+                                            <form action="{{ route('admin.perawat.verifikasi.kelayakan') }}"
+                                                method="POST">
+                                                @csrf
+                                                <input type="hidden" name="id" value="{{ $item->id }}">
+                                                <input type="hidden" name="tipe" value="tambahan">
+                                                <input type="hidden" name="kelayakan" value="layak">
+                                                <button type="submit" class="btn-verify btn-verify-success"
+                                                    title="Set Layak">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
 
-                                            {{-- Tombol Tidak Layak --}}
-                                            <button type="button" class="btn-verify btn-verify-danger btn-kelayakan"
-                                                data-id="{{ $item->id }}" data-tipe="tambahan"
-                                                data-status="tidak_layak" title="Set Tidak Layak">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
+                                            {{-- Form Tidak Layak --}}
+                                            <form action="{{ route('admin.perawat.verifikasi.kelayakan') }}"
+                                                method="POST">
+                                                @csrf
+                                                <input type="hidden" name="id" value="{{ $item->id }}">
+                                                <input type="hidden" name="tipe" value="tambahan">
+                                                <input type="hidden" name="kelayakan" value="tidak_layak">
+                                                <button type="submit" class="btn-verify btn-verify-danger"
+                                                    title="Set Tidak Layak">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
 
-                                            {{-- Tombol Reset/Pending --}}
-                                            <button type="button" class="btn-verify btn-verify-secondary btn-kelayakan"
-                                                data-id="{{ $item->id }}" data-tipe="tambahan" data-status="pending"
-                                                title="Reset ke Pending">
-                                                <i class="bi bi-arrow-counterclockwise"></i>
-                                            </button>
+                                            {{-- Form Pending/Reset --}}
+                                            <form action="{{ route('admin.perawat.verifikasi.kelayakan') }}"
+                                                method="POST">
+                                                @csrf
+                                                <input type="hidden" name="id" value="{{ $item->id }}">
+                                                <input type="hidden" name="tipe" value="tambahan">
+                                                <input type="hidden" name="kelayakan" value="pending">
+                                                <button type="submit" class="btn-verify btn-verify-secondary"
+                                                    title="Reset ke Pending">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                     <td class="text-end">

@@ -1,4 +1,5 @@
 @php
+    // Logika Tanggal Expired
     $now = \Carbon\Carbon::now();
     $expired = \Carbon\Carbon::parse($item->tgl_expired);
     $daysLeft = $now->diffInDays($expired, false);
@@ -8,7 +9,6 @@
         $icon = 'bi-x-circle';
         $text = 'Expired (' . abs($daysLeft) . ' hari)';
     } elseif ($daysLeft <= 90) {
-        // Warning 3 bulan sebelum
         $badgeClass = 'badge-soft-warning';
         $icon = 'bi-exclamation-circle';
         $text = 'Exp: ' . $daysLeft . ' hari lagi';
@@ -16,6 +16,19 @@
         $badgeClass = 'badge-soft-success';
         $icon = 'bi-check-circle';
         $text = 'Aktif';
+    }
+
+    $tipeDokumen = 'lisensi'; // Default
+    // Cek nama dokumen untuk menentukan tipe
+    $namaLower = strtolower($item->nama ?? '');
+    
+    if (str_contains($namaLower, 'str')) {
+        $tipeDokumen = 'str';
+    } elseif (str_contains($namaLower, 'sip')) {
+        $tipeDokumen = 'sip';
+    } 
+    if (isset($item->jenis)) {
+        $tipeDokumen = 'tambahan';
     }
 @endphp
 
@@ -38,35 +51,48 @@
         </span>
 
         <div class="border-top border-light pt-2 mt-1">
-            {{-- Label Status --}}
+            {{-- Label Status Verifikasi --}}
             <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="text-muted" style="font-size: 10px;">Verifikasi:</span>
-                <span class="badge-soft badge-soft-secondary status-kelayakan-{{ $item->id }}">
-                    <span class="fw-bold text-uppercase kelayakan-label">{{ $item->kelayakan ?? 'pending' }}</span>
+                <span class="badge-soft badge-soft-secondary">
+                    <span class="fw-bold text-uppercase">{{ $item->kelayakan ?? 'pending' }}</span>
                 </span>
             </div>
 
-            {{-- Tombol Aksi UI Baru --}}
+            {{-- Tombol Aksi (Menggunakan Form) --}}
             <div class="verify-actions">
-                <button type="button" class="btn-verify btn-verify-success btn-kelayakan"
-                    data-id="{{ $item->id }}"
-                    data-tipe="{{ isset($item->jenis) ? 'tambahan' : (isset($item->nomor) && isset($item->lembaga) ? (str_contains(strtolower($item->nama), 'str') ? 'str' : (str_contains(strtolower($item->nama), 'sip') ? 'sip' : 'lisensi')) : 'lisensi') }}"
-                    data-status="layak" title="Layak">
-                    <i class="bi bi-check-lg"></i>
-                </button>
+                {{-- Form Layak --}}
+                <form action="{{ route('admin.perawat.verifikasi.kelayakan') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $item->id }}">
+                    <input type="hidden" name="tipe" value="{{ $tipeDokumen }}">
+                    <input type="hidden" name="kelayakan" value="layak">
+                    <button type="submit" class="btn-verify btn-verify-success" title="Set Layak">
+                        <i class="bi bi-check-lg"></i>
+                    </button>
+                </form>
 
-                <button type="button" class="btn-verify btn-verify-danger btn-kelayakan" data-id="{{ $item->id }}"
-                    data-tipe="{{ isset($item->jenis) ? 'tambahan' : (isset($item->nomor) && isset($item->lembaga) ? (str_contains(strtolower($item->nama), 'str') ? 'str' : (str_contains(strtolower($item->nama), 'sip') ? 'sip' : 'lisensi')) : 'lisensi') }}"
-                    data-status="tidak_layak" title="Tidak Layak">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+                {{-- Form Tidak Layak --}}
+                <form action="{{ route('admin.perawat.verifikasi.kelayakan') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $item->id }}">
+                    <input type="hidden" name="tipe" value="{{ $tipeDokumen }}">
+                    <input type="hidden" name="kelayakan" value="tidak_layak">
+                    <button type="submit" class="btn-verify btn-verify-danger" title="Set Tidak Layak">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </form>
 
-                <button type="button" class="btn-verify btn-verify-secondary btn-kelayakan"
-                    data-id="{{ $item->id }}"
-                    data-tipe="{{ isset($item->jenis) ? 'tambahan' : (isset($item->nomor) && isset($item->lembaga) ? (str_contains(strtolower($item->nama), 'str') ? 'str' : (str_contains(strtolower($item->nama), 'sip') ? 'sip' : 'lisensi')) : 'lisensi') }}"
-                    data-status="pending" title="Reset">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                </button>
+                {{-- Form Pending/Reset --}}
+                <form action="{{ route('admin.perawat.verifikasi.kelayakan') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $item->id }}">
+                    <input type="hidden" name="tipe" value="{{ $tipeDokumen }}">
+                    <input type="hidden" name="kelayakan" value="pending">
+                    <button type="submit" class="btn-verify btn-verify-secondary" title="Reset ke Pending">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </td>
@@ -80,37 +106,3 @@
         @endif
     </td>
 </tr>
-
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn-kelayakan').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var id = this.getAttribute('data-id');
-                    var tipe = this.getAttribute('data-tipe');
-                    var kelayakan = this.getAttribute('data-status');
-                    var row = this.closest('tr');
-                    fetch("{{ route('admin.perawat.verifikasi.kelayakan') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')
-                                    .getAttribute('content')
-                            },
-                            body: JSON.stringify({
-                                id: id,
-                                tipe: tipe,
-                                kelayakan: kelayakan
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                row.querySelector('.kelayakan-label').textContent = kelayakan;
-                            }
-                        });
-                });
-            });
-        });
-    </script>
-@endpush

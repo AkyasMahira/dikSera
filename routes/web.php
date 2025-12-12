@@ -46,7 +46,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/perawat/{id}/sertifikat', [AdminPerawatController::class, 'sertifikat'])
             ->name('perawat.sertifikat');
 
-        // Verifikasi kelayakan dokumen (AJAX)
+        // Verifikasi kelayakan dokumen
         Route::post('/perawat/verifikasi-kelayakan', [AdminPerawatController::class, 'verifikasiKelayakan'])->name('perawat.verifikasi.kelayakan');
 
         Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');

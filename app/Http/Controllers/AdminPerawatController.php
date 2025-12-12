@@ -316,7 +316,6 @@ class AdminPerawatController extends Controller
         return view('admin.perawat.sertifikat', compact('user', 'sip', 'str', 'dataTambahan', 'lisensi'));
     }
 
-    // VERIFIKASI KELAYAKAN DOKUMEN
     public function verifikasiKelayakan(Request $request)
     {
         $request->validate([
@@ -340,9 +339,12 @@ class AdminPerawatController extends Controller
                 $model = \App\Models\PerawatDataTambahan::findOrFail($request->id);
                 break;
         }
-        $model->kelayakan = $request->kelayakan;
-        $model->save();
 
-        return response()->json(['success' => true, 'kelayakan' => $model->kelayakan]);
+        if ($model) {
+            $model->kelayakan = $request->kelayakan;
+            $model->save();
+        }
+
+        return redirect()->back()->with('success', 'Status kelayakan dokumen berhasil diperbarui.');
     }
 }
