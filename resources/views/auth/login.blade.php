@@ -20,9 +20,12 @@
             type="email"
             name="email"
             value="{{ old('email') }}"
-            class="form-control form-control-sm form-control-light"
+            class="form-control form-control-sm form-control-light @error('email') is-invalid @enderror"
             required
             autofocus>
+        @error('email')
+            <div class="small text-danger mt-1">{{ $message }}</div>
+        @enderror
     </div>
 
     <div class="mb-2">
@@ -32,12 +35,15 @@
                 id="password-input"
                 type="password"
                 name="password"
-                class="form-control form-control-sm form-control-light"
+                class="form-control form-control-sm form-control-light @error('password') is-invalid @enderror"
                 required>
             <button type="button" id="toggle-password" class="toggle-password-btn" data-target="password-input">
                 Lihat
             </button>
         </div>
+        @error('password')
+            <div class="small text-danger mt-1">{{ $message }}</div>
+        @enderror
     </div>
 
     <div class="mb-2 form-check">
