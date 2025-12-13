@@ -8,6 +8,9 @@
 @section('title', 'Manajemen Form – Admin DIKSERA')
 
 @push('styles')
+    {{-- CSS SweetAlert --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
         /* Card Container */
         .content-card {
@@ -39,7 +42,7 @@
             color: var(--text-main);
         }
 
-        /* Status Badges (Soft Color) */
+        /* Status Badges */
         .badge-soft {
             padding: 6px 10px;
             border-radius: 6px;
@@ -55,25 +58,20 @@
             color: #166534;
         }
 
-        /* Publish */
         .badge-soft-danger {
             background: #fee2e2;
             color: #991b1b;
         }
 
-        /* Closed */
         .badge-soft-secondary {
             background: #f1f5f9;
             color: #475569;
         }
 
-        /* Draft */
         .badge-soft-info {
             background: #e0f2fe;
             color: #075985;
         }
-
-        /* Target */
 
         /* Action Buttons */
         .btn-icon {
@@ -112,12 +110,12 @@
 
     <div class="content-card">
 
-        {{-- Header Tools: Title & Actions --}}
+        {{-- Header Tools --}}
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-
-            {{-- Search Bar (Placeholder) --}}
+            {{-- Search Bar --}}
             <form action="" method="GET" class="d-flex gap-2">
-                <input type="text" class="form-control form-control-sm search-input" placeholder="Cari judul form..."
+                <input type="text" name="search" value="{{ request('search') }}"
+                    class="form-control form-control-sm search-input" placeholder="Cari judul form..."
                     style="width: 240px;">
                 <button class="btn btn-sm btn-light border" type="submit">
                     <i class="bi bi-search"></i>
@@ -158,7 +156,6 @@
                                     'label' => 'Closed',
                                 ],
                             ];
-
                             $statusConfig = $map[$form->status] ?? [
                                 'class' => 'badge-soft-secondary',
                                 'icon' => 'bi-pencil-square',
@@ -182,13 +179,11 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-column gap-1">
-                                    {{-- Target Badge --}}
                                     <div>
                                         <span class="badge-soft badge-soft-info py-1" style="font-size: 10px;">
                                             <i class="bi bi-people"></i> {{ ucfirst($form->target_peserta) }}
                                         </span>
                                     </div>
-                                    {{-- Jadwal --}}
                                     <div class="text-muted" style="font-size: 11px;">
                                         <div><i class="bi bi-calendar-event me-1"></i>
                                             {{ $form->waktu_mulai->format('d M/y H:i') }}</div>
@@ -205,7 +200,7 @@
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-1">
 
-                                    {{-- Dropdown Settings Status --}}
+                                    {{-- Dropdown Settings --}}
                                     <div class="dropdown">
                                         <button class="btn btn-icon btn-outline-secondary" type="button"
                                             data-bs-toggle="dropdown" aria-expanded="false" title="Ubah Status">
@@ -215,8 +210,6 @@
                                             <li>
                                                 <h6 class="dropdown-header">Ubah Status</h6>
                                             </li>
-
-                                            {{-- Publish --}}
                                             <li>
                                                 <form action="{{ route('admin.form.update-status', $form->id) }}"
                                                     method="POST">
@@ -227,8 +220,6 @@
                                                     </button>
                                                 </form>
                                             </li>
-
-                                            {{-- Draft --}}
                                             <li>
                                                 <form action="{{ route('admin.form.update-status', $form->id) }}"
                                                     method="POST">
@@ -239,8 +230,6 @@
                                                     </button>
                                                 </form>
                                             </li>
-
-                                            {{-- Close --}}
                                             <li>
                                                 <form action="{{ route('admin.form.update-status', $form->id) }}"
                                                     method="POST">
@@ -255,15 +244,17 @@
                                     </div>
 
                                     {{-- Edit --}}
-                                    <a href="#" class="btn btn-icon btn-outline-warning" title="Edit Detail"
+                                    <a href="{{ route('admin.form.edit', $form->id) }}"
+                                        class="btn btn-icon btn-outline-warning" title="Edit Detail"
                                         data-bs-toggle="tooltip">
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
-                                    {{-- Hapus --}}
-                                    <form action="#" method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus form ini?');">
-                                        @csrf @method('DELETE')
+                                    {{-- Hapus (Menggunakan Class 'delete-form' untuk trigger SweetAlert) --}}
+                                    <form action="{{ route('admin.form.destroy', $form->id) }}" method="POST"
+                                        class="d-inline delete-form">
+                                        @csrf
+                                        @method('DELETE')
                                         <button type="submit" class="btn btn-icon btn-outline-danger" title="Hapus"
                                             data-bs-toggle="tooltip">
                                             <i class="bi bi-trash"></i>
@@ -287,3 +278,52 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    {{-- SweetAlert JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // 1. Handle Flash Messages dari Controller
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 2000
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: "{{ session('error') }}",
+            });
+        @endif
+
+        // 2. Handle Konfirmasi Hapus
+        const deleteForms = document.querySelectorAll('.delete-form');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Cegah submit langsung
+
+                Swal.fire({
+                    title: 'Apakah Anda yakin?',
+                    text: "Form ini beserta data peserta & nilai terkait akan dihapus secara permanen!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit(); // Submit form jika user klik Ya
+                    }
+                });
+            });
+        });
+    </script>
+@endpush

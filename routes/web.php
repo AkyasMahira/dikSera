@@ -68,6 +68,9 @@ Route::middleware(['auth'])->group(function () {
 
         // === PENANGGUNG JAWAB UJIAN ===
         Route::resource('penanggung-jawab', PenanggungJawabUjianController::class);
+        Route::get('/forms/{form}/edit', [FormController::class, 'edit'])->name('form.edit');
+        Route::put('/forms/{form}', [FormController::class, 'update'])->name('form.update');
+        Route::delete('/forms/{form}', [FormController::class, 'destroy'])->name('form.destroy');
     });
 
     // === GROUP PERAWAT ===

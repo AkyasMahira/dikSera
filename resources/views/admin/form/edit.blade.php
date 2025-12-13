@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
 @php
-    $pageTitle = 'Buat Form Baru';
-    $pageSubtitle = 'Buat jadwal ujian atau formulir pengumpulan data.';
+    $pageTitle = 'Edit Form';
+    $pageSubtitle = 'Perbarui jadwal ujian atau formulir pengumpulan data.';
 @endphp
 
-@section('title', 'Buat Form – Admin DIKSERA')
+@section('title', 'Edit Form – Admin DIKSERA')
 
 @push('styles')
     <style>
@@ -83,7 +83,7 @@
             border-color: var(--blue-main);
         }
 
-        /* Participant List Item Styling (UPDATED) */
+        /* Participant List Item Styling */
         .participant-item {
             border: 1px solid var(--border-soft);
             border-radius: 8px;
@@ -144,6 +144,7 @@
     </style>
 @endpush
 
+
 @section('content')
 
     <div class="row justify-content-center">
@@ -151,58 +152,55 @@
             <div class="d-flex justify-content-end mb-3">
                 <a href="{{ route('admin.form.index') }}" class="btn btn-sm btn-outline-secondary px-3"
                     style="border-radius: 8px;">
-                    <i class="bi bi-arrow-left"></i> Kembali ke Daftar Form
+                    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
                 </a>
             </div>
 
-            <form action="{{ route('admin.form.store') }}" method="POST">
-                @csrf
+            <form action="{{ route('admin.form.update', $form->id) }}" method="POST">
+                @csrf @method('PUT')
+
                 <div class="content-card">
-                    <h5 class="mb-4 fw-bold text-dark border-bottom pb-3">Buat Formulir Baru</h5>
+                    <h5 class="mb-4 fw-bold text-dark border-bottom pb-3">Edit Formulir</h5>
 
-                    {{-- 1. Informasi Dasar --}}
+                    {{-- Info & Jadwal --}}
                     <div class="mb-4">
-                        <label class="form-label">Judul Formulir / Ujian <span class="text-danger">*</span></label>
+                        <label class="form-label">Judul Formulir <span class="text-danger">*</span></label>
                         <input type="text" name="judul" class="form-control form-control-custom fw-bold"
-                            placeholder="Contoh: Ujian Kompetensi Perawat 2024" required>
+                            value="{{ old('judul', $form->judul) }}" required>
                     </div>
-
                     <div class="mb-4">
-                        <label class="form-label">Deskripsi / Petunjuk</label>
-                        <textarea name="deskripsi" class="form-control form-control-custom" rows="4"
-                            placeholder="Tuliskan deskripsi singkat atau instruksi pengerjaan..."></textarea>
+                        <label class="form-label">Deskripsi</label>
+                        <textarea name="deskripsi" class="form-control form-control-custom" rows="4">{{ old('deskripsi', $form->deskripsi) }}</textarea>
                     </div>
-
-                    {{-- 2. Jadwal --}}
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label">Waktu Mulai <span class="text-danger">*</span></label>
                             <input type="datetime-local" name="waktu_mulai" class="form-control form-control-custom"
-                                required>
+                                value="{{ old('waktu_mulai', $form->waktu_mulai->format('Y-m-d\TH:i')) }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Waktu Selesai <span class="text-danger">*</span></label>
                             <input type="datetime-local" name="waktu_selesai" class="form-control form-control-custom"
-                                required>
+                                value="{{ old('waktu_selesai', $form->waktu_selesai->format('Y-m-d\TH:i')) }}" required>
                         </div>
                     </div>
 
                     <hr class="border-light my-4">
 
-                    {{-- 3. Target Peserta --}}
+                    {{-- Target Peserta --}}
                     <div class="mb-4">
-                        <label class="form-label mb-3">Siapa yang dapat mengakses form ini?</label>
+                        <label class="form-label mb-3">Target Akses</label>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="target-option w-100 h-100">
                                     <input class="form-check-input d-none target-radio" type="radio" name="target_peserta"
-                                        value="semua" checked onclick="togglePeserta(false)">
+                                        value="semua"
+                                        {{ old('target_peserta', $form->target_peserta) == 'semua' ? 'checked' : '' }}
+                                        onclick="togglePeserta(false)">
                                     <div class="target-card">
                                         <div class="target-icon"><i class="bi bi-people"></i></div>
                                         <div>
                                             <div class="fw-bold text-dark">Semua Perawat</div>
-                                            <div class="text-muted small" style="font-size: 11px;">Form terbuka untuk
-                                                seluruh perawat terdaftar.</div>
                                         </div>
                                     </div>
                                 </label>
@@ -210,13 +208,13 @@
                             <div class="col-md-6">
                                 <label class="target-option w-100 h-100">
                                     <input class="form-check-input d-none target-radio" type="radio" name="target_peserta"
-                                        value="khusus" onclick="togglePeserta(true)">
+                                        value="khusus"
+                                        {{ old('target_peserta', $form->target_peserta) == 'khusus' ? 'checked' : '' }}
+                                        onclick="togglePeserta(true)">
                                     <div class="target-card">
                                         <div class="target-icon"><i class="bi bi-person-check"></i></div>
                                         <div>
                                             <div class="fw-bold text-dark">Perawat Tertentu</div>
-                                            <div class="text-muted small" style="font-size: 11px;">Pilih manual perawat yang
-                                                diizinkan.</div>
                                         </div>
                                     </div>
                                 </label>
@@ -224,17 +222,17 @@
                         </div>
                     </div>
 
-                    {{-- 4. Daftar Peserta (Hidden by Default) --}}
+                    {{-- Daftar Peserta --}}
                     <div id="list-peserta-container" class="mb-4" style="display: none;">
                         <div class="d-flex justify-content-between align-items-end mb-2">
-                            <label class="form-label mb-0">Pilih Perawat</label>
+                            <label class="form-label mb-0">Edit Daftar Peserta</label>
                             <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"
                                 style="font-size: 11px;">
                                 <i class="bi bi-exclamation-triangle-fill me-1"></i> Background Merah = Dokumen Expired
                             </span>
                         </div>
 
-                        {{-- SEARCH BAR BARU DISINI --}}
+                        {{-- SEARCH BAR --}}
                         <div class="input-group mb-3">
                             <span class="input-group-text bg-white border-end-0"><i
                                     class="bi bi-search text-muted"></i></span>
@@ -243,21 +241,22 @@
                                 placeholder="Cari nama, email, atau NIP...">
                         </div>
 
-                        {{-- Wrapper List --}}
                         <div class="bg-light p-3 rounded-3 border">
                             <div class="custom-scroll">
-                                <div class="row g-2" id="peserta-list-wrapper">
+                                <div class="row g-2">
                                     @foreach ($users as $user)
                                         @php
                                             $warnings = $user->dokumen_warning ?? [];
                                             $isUrgent = count($warnings) > 0;
-                                            // Siapkan string pencarian (lower case)
+                                            $isChecked = in_array(
+                                                $user->id,
+                                                old('participants', $selectedParticipants),
+                                            );
                                             $searchText = strtolower(
                                                 $user->name . ' ' . ($user->email ?? '') . ' ' . ($user->nip ?? ''),
                                             );
                                         @endphp
 
-                                        {{-- Tambahkan class 'peserta-item-col' dan 'data-search' untuk filtering JS --}}
                                         <div class="col-md-6 peserta-item-col" data-search="{{ $searchText }}">
                                             <label
                                                 class="participant-item d-flex align-items-start gap-3 w-100 {{ $isUrgent ? 'urgent' : '' }}"
@@ -265,7 +264,8 @@
                                                 <div class="pt-1">
                                                     <input class="form-check-input" type="checkbox" name="participants[]"
                                                         value="{{ $user->id }}" id="user_{{ $user->id }}"
-                                                        style="cursor: pointer; transform: scale(1.1);">
+                                                        style="cursor: pointer; transform: scale(1.1);"
+                                                        {{ $isChecked ? 'checked' : '' }}>
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <div class="d-flex justify-content-between align-items-start">
@@ -277,7 +277,7 @@
                                                         @endif
                                                     </div>
                                                     <div class="text-muted mb-1" style="font-size: 11px;">
-                                                        {{ $user->email ?? ($user->nip ?? 'No ID') }}</div>
+                                                        {{ $user->email ?? $user->nip }}</div>
                                                     @if ($isUrgent)
                                                         <div class="d-flex flex-wrap gap-1 mt-1">
                                                             @foreach ($warnings as $docName)
@@ -290,27 +290,17 @@
                                         </div>
                                     @endforeach
                                 </div>
-
-                                {{-- Pesan jika tidak ada hasil search --}}
                                 <div id="no-result-msg" class="text-center text-muted py-4" style="display: none;">
                                     <i class="bi bi-search display-6 opacity-25"></i>
                                     <p class="small mt-2">Data tidak ditemukan.</p>
                                 </div>
-
-                                @if ($users->isEmpty())
-                                    <div class="text-center text-muted py-5">
-                                        <i class="bi bi-people display-6 opacity-25"></i>
-                                        <p class="small mt-2">Belum ada data perawat di database.</p>
-                                    </div>
-                                @endif
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 pt-3 border-top">
-                        <button type="reset" class="btn btn-light px-4" style="border-radius: 8px;">Reset</button>
                         <button type="submit" class="btn btn-primary px-4 shadow-sm" style="border-radius: 8px;">
-                            <i class="bi bi-save me-1"></i> Simpan Form
+                            <i class="bi bi-save me-1"></i> Simpan Perubahan
                         </button>
                     </div>
                 </div>
@@ -320,11 +310,8 @@
 @endsection
 
 @push('scripts')
-    {{-- SweetAlert2 JS --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // 1. Logic Toggle & Search
         function togglePeserta(show) {
             const container = document.getElementById('list-peserta-container');
             if (show) {
@@ -340,42 +327,34 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Handle Old Input
             const selected = document.querySelector('input[name="target_peserta"]:checked');
             if (selected && selected.value === 'khusus') {
                 togglePeserta(true);
             }
 
-            // Logic Search Real-time
+            // Search Logic
             const searchInput = document.getElementById('search-peserta');
             if (searchInput) {
                 searchInput.addEventListener('keyup', function(e) {
                     const keyword = e.target.value.toLowerCase();
                     const items = document.querySelectorAll('.peserta-item-col');
                     let visibleCount = 0;
-
                     items.forEach(function(item) {
                         const searchData = item.getAttribute('data-search');
                         if (searchData.includes(keyword)) {
-                            item.style.display = 'block'; // Tampilkan (Grid col menyesuaikan)
+                            item.style.display = 'block';
                             visibleCount++;
                         } else {
-                            item.style.display = 'none'; // Sembunyikan
+                            item.style.display = 'none';
                         }
                     });
-
-                    // Show/Hide No Result Message
                     const noMsg = document.getElementById('no-result-msg');
-                    if (visibleCount === 0) {
-                        noMsg.style.display = 'block';
-                    } else {
-                        noMsg.style.display = 'none';
-                    }
+                    noMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
                 });
             }
         });
 
-        // 2. Logic SweetAlert dari Session Flash
+        // SweetAlert
         @if (session('success'))
             Swal.fire({
                 icon: 'success',
@@ -385,21 +364,18 @@
                 timer: 2000
             });
         @endif
-
         @if (session('error'))
             Swal.fire({
                 icon: 'error',
                 title: 'Gagal!',
-                text: "{{ session('error') }}",
+                text: "{{ session('error') }}"
             });
         @endif
-
-        // Jika ada validasi error
         @if ($errors->any())
             Swal.fire({
                 icon: 'warning',
                 title: 'Perhatian',
-                text: "Mohon periksa kembali inputan Anda.",
+                text: "Mohon periksa kembali inputan Anda."
             });
         @endif
     </script>
