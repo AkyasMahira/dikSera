@@ -67,5 +67,52 @@ class FormController extends Controller
         return back()->with('success', "Status berhasil diubah menjadi " . ucfirst($request->status));
     }
 
-    // Nanti tambahkan edit, update, destroy di sini
+    public function edit(Form $form)
+    {
+        $users = User::where('role', 'perawat')->get();
+        $users = $users->sortByDesc(function ($user) {
+            return count($user->dokumen_warning) > 0;
+        });
+
+        $form->load('participants');
+
+        $selectedParticipants = $form->participants->pluck('id')->toArray();
+
+        return view('admin.form.edit', compact('form', 'users', 'selectedParticipants'));
+    }
+
+    public function update(Request $request, Form $form)
+    {
+        $request->validate([
+            'judul' => 'required|string|max:255',
+            'waktu_mulai' => 'required|date',
+            'waktu_selesai' => 'required|date|after:waktu_mulai',
+            'target_peserta' => 'required',
+            'participants' => 'nullable|array',
+            'participants.*' => 'exists:users,id',
+        ]);
+
+        $form->update([
+            'judul' => $request->judul,
+            'slug' => Str::slug($request->judul) . '-' . Str::random(5),
+            'deskripsi' => $request->deskripsi,
+            'waktu_mulai' => $request->waktu_mulai,
+            'waktu_selesai' => $request->waktu_selesai,
+            'target_peserta' => $request->target_peserta,
+        ]);
+
+        if ($request->target_peserta == 'khusus') {
+            $form->participants()->sync($request->participants ?? []);
+        } else {
+            $form->participants()->detach();
+        }
+
+        return redirect()->route('admin.form.index')->with('success', 'Form berhasil diperbarui!');
+    }
+
+    public function destroy(Form $form)
+    {
+        $form->delete();
+        return back()->with('success', 'Form berhasil dihapus!');
+    }
 }
