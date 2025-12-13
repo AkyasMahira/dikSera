@@ -23,7 +23,7 @@ class UserFormController extends Controller
             ->orderBy('waktu_mulai', 'desc')
             ->get();
 
-        return view('admin.ujian_aktif.index', compact('forms', 'now'));
+        return view('perawat.ujian_aktif.index', compact('forms', 'now'));
     }
 
     public function show(Form $form)
@@ -34,6 +34,6 @@ class UserFormController extends Controller
             }
         }
 
-        return view('admin.ujian_aktif.show', compact('form'));
+        return view('perawat.ujian_aktif.show', compact('form'));
     }
 }
