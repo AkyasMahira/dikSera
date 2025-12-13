@@ -65,6 +65,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/forms/create', [FormController::class, 'create'])->name('form.create');
         Route::post('/forms', [FormController::class, 'store'])->name('form.store');
         Route::patch('form/{form}/update-status', [FormController::class, 'updateStatus'])->name('form.update-status');
+        Route::get('/forms/{form}/edit', [FormController::class, 'edit'])->name('form.edit');
+        Route::put('/forms/{form}', [FormController::class, 'update'])->name('form.update');
+        Route::delete('/forms/{form}', [FormController::class, 'destroy'])->name('form.destroy');
     });
 
     // === GROUP PERAWAT ===
