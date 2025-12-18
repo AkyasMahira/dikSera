@@ -205,12 +205,26 @@
                         <div class="row g-4">
 
                             {{-- Pilih Perawat (Multi Select) --}}
+                            {{-- Pilih Perawat (Multi Select) --}}
                             <div class="col-12">
-                                <label class="form-label">Pilih Perawat (Bisa Banyak) <span
-                                        class="required-star">*</span></label>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Pilih Perawat (Bisa Banyak) <span class="required-star">*</span></label>
+                                    
+                                    {{-- Tombol Aksi --}}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-select-all">
+                                            <i class="bi bi-check-all"></i> Pilih Semua
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btn-reset-all">
+                                            <i class="bi bi-x-circle"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div class="mb-1">
                                     <select name="user_ids[]" id="choice-users" class="form-select" multiple required>
-                                        <option value="">Cari Nama Perawat...</option>
+                                        {{-- Option kosong untuk placeholder --}}
+                                        <option value="">Cari Nama Perawat...</option> 
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
                                                 {{ collect(old('user_ids'))->contains($user->id) ? 'selected' : '' }}>
@@ -219,8 +233,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="form-text">Nomor lisensi akan digenerate otomatis berurutan untuk setiap perawat
-                                    yang dipilih.</div>
+                                <div class="form-text">Nomor lisensi akan digenerate otomatis berurutan untuk setiap perawat yang dipilih.</div>
                             </div>
 
                             {{-- Aturan Perpanjangan --}}
@@ -308,9 +321,19 @@
 @push('scripts')
     {{-- Load JS Choices --}}
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 1. Ambil Element
             const element = document.getElementById('choice-users');
+            const btnSelectAll = document.getElementById('btn-select-all');
+            const btnResetAll = document.getElementById('btn-reset-all');
+
+            // 2. AMBIL ID DARI PHP & KONVERSI KE STRING (PENTING!)
+            // Kita pakai map(strval) agar ID '1' dibaca sebagai string "1", bukan angka 1.
+            const allUserIds = {!! json_encode($users->pluck('id')->map(fn($id) => (string) $id)) !!};
+
+            // 3. Inisialisasi Choices.js
             const choices = new Choices(element, {
                 removeItemButton: true,
                 searchEnabled: true,
@@ -318,6 +341,25 @@
                 placeholderValue: 'Cari dan pilih perawat...',
                 noResultsText: 'Tidak ada perawat ditemukan',
                 itemSelectText: 'Tekan untuk memilih',
+                shouldSort: false,
+            });
+
+            // 4. LOGIKA TOMBOL PILIH SEMUA
+            btnSelectAll.addEventListener('click', function(e) {
+                e.preventDefault(); // Mencegah form submit tidak sengaja
+                
+                // Trik: Hapus dulu semua (biar bersih), baru masukkan semua
+                choices.removeActiveItems(); 
+                choices.setChoiceByValue(allUserIds); 
+                
+                // Debugging (Cek di Console browser jika masih gagal)
+                console.log('Mencoba memilih ID:', allUserIds);
+            });
+
+            // 5. LOGIKA TOMBOL RESET
+            btnResetAll.addEventListener('click', function(e) {
+                e.preventDefault();
+                choices.removeActiveItems();
             });
         });
     </script>

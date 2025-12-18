@@ -1,175 +1,308 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Perawat – DIKSERA')
+@section('title', 'Dashboard Perawat')
 
 @section('content')
-<div class="container-fluid py-3">
-    {{-- HERO --}}
-    <div class="row g-3 align-items-stretch">
+<div class="container-fluid py-4 bg-light-subtle">
+
+    {{-- 1. HEADER SECTION (Minimalist Welcome) --}}
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="fw-bold text-dark mb-1">Halo, {{ $profile->nama_lengkap ?? explode(' ', $user->name)[0] }}! 👋</h4>
+                <p class="text-muted small mb-0">Selamat datang kembali di panel profesional Anda.</p>
+            </div>
+            <div>
+                <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill fw-normal shadow-sm">
+                    <i class="bi bi-calendar-event me-2"></i> {{ now()->format('d F Y') }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {{-- ALERT: HANYA MUNCUL JIKA KRITIKAL --}}
+    @if(count($warnings) > 0)
+    <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4 rounded-3" role="alert">
+        <div class="bg-danger bg-opacity-10 text-danger p-2 rounded-circle me-3">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div>
+            <strong class="d-block text-danger">Tindakan Diperlukan</strong>
+            <span class="small text-muted">Dokumen berikut mendekati kadaluwarsa: {{ implode(', ', $warnings) }}</span>
+        </div>
+    </div>
+    @endif
+
+    <div class="row g-4">
+        {{-- KOLOM KIRI (MAIN CONTENT) --}}
         <div class="col-lg-8">
-            <div class="dash-card h-100 d-flex flex-column flex-md-row align-items-center p-3">
-                <div class="hero-icon-wrapper me-md-3 mb-3 mb-md-0">
-                    <div class="hero-icon-circle">
-                        <img src="{{ asset('icon.png') }}" alt="DIKSERA" class="hero-icon-img">
+            
+            {{-- 2. QUICK STATS (Clean Cards) --}}
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-square bg-primary-subtle text-primary me-3">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">{{ $counts['pendidikan'] }}</h5>
+                                <span class="text-muted small">Riwayat Pendidikan</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex-grow-1">
-                    <h1 class="dash-title mb-1">Hai, {{ $user->name ?? 'Perawat' }} 👋</h1>
-                    <p class="dash-subtitle mb-2">
-                        Selamat datang di <strong>DIKSERA</strong><br>
-                        Digitalisasi Kompetensi, Sertifikasi &amp; Evaluasi Perawat.
-                    </p>
-                    <div class="small text-muted">
-                        Lengkapi <strong>Daftar Riwayat Hidup (DRH)</strong>, kompetensi, dan dokumen pendukungmu di sini.
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-square bg-success-subtle text-success me-3">
+                                <i class="bi bi-award-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">{{ $counts['pelatihan'] }}</h5>
+                                <span class="text-muted small">Sertifikat Pelatihan</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-square bg-warning-subtle text-warning me-3">
+                                <i class="bi bi-briefcase-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">{{ $counts['pekerjaan'] }}</h5>
+                                <span class="text-muted small">Pengalaman Kerja</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 3. PROGRESS DRH (Clean List) --}}
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-0">Kelengkapan Data Diri (DRH)</h6>
+                        <p class="text-muted extra-small mb-0">Lengkapi data ini untuk mengajukan sertifikasi.</p>
+                    </div>
+                    <div class="text-end">
+                        <h4 class="fw-bold text-primary mb-0">{{ $progressPercent }}%</h4>
+                    </div>
+                </div>
+                <div class="card-body px-4 pb-4 pt-2">
+                    {{-- Progress Line --}}
+                    <div class="progress bg-light mb-4" style="height: 6px; border-radius: 10px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $progressPercent }}%; border-radius: 10px;"></div>
+                    </div>
+
+                    <div class="row g-3">
+                        @foreach($sections as $sec)
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center p-3 rounded-3 border h-100 section-item {{ $sec['status'] ? 'border-success-subtle bg-success-subtle bg-opacity-10' : 'bg-white' }}">
+                                <div class="me-3">
+                                    @if($sec['status'])
+                                        <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                                    @else
+                                        <div class="rounded-circle border border-2 border-secondary d-flex align-items-center justify-content-center text-secondary" style="width: 24px; height: 24px; font-size: 10px;">
+                                            <i class="bi bi-circle-fill text-white"></i>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0 fw-bold small text-dark">{{ $sec['nama'] }}</h6>
+                                    <small class="{{ $sec['status'] ? 'text-success' : 'text-muted' }}" style="font-size: 11px;">
+                                        {{ $sec['status'] ? 'Lengkap' : ($sec['wajib'] ? 'Wajib Diisi' : 'Opsional') }}
+                                    </small>
+                                </div>
+                                @if(!$sec['status'])
+                                    <a href="{{ route('register.perawat') }}" class="btn btn-sm btn-light border text-primary rounded-circle shadow-sm" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- 4. CHART PORTFOLIO (Simple) --}}
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-1">Visualisasi Portfolio</h6>
+                            <p class="text-muted extra-small mb-3">Sebaran data kompetensi yang Anda miliki.</p>
+                            <div style="height: 180px;">
+                                <canvas id="cleanChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center border-start">
+                            <h2 class="fw-bold mb-0 text-dark">{{ array_sum($chartData['data']) }}</h2>
+                            <p class="text-muted small mb-0">Total Item Data</p>
+                            <hr class="w-25 mx-auto my-3 text-muted">
+                            <a href="{{ route('perawat.data.lengkap') }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">Lihat Detail</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- PROGRESS --}}
+        {{-- KOLOM KANAN (SIDEBAR) --}}
         <div class="col-lg-4">
-            <div class="dash-card h-100 p-3 d-flex flex-column justify-content-between">
-                <div>
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="small text-muted">Progres Kelengkapan DRH</span>
-                        <span class="badge bg-primary-subtle text-primary fw-semibold">
-                            {{ $progressPercent }}%
-                        </span>
+            
+            {{-- 1. PROFILE CARD (Clean Vertical) --}}
+            <div class="card border-0 shadow-sm rounded-4 mb-4 text-center overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="mb-3 position-relative d-inline-block">
+                        @if($profile && $profile->foto_3x4)
+                            <img src="{{ asset('storage/'.$profile->foto_3x4) }}" class="rounded-circle shadow-sm" width="100" height="100" style="object-fit: cover;">
+                        @else
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto text-secondary display-6 fw-bold" style="width: 100px; height: 100px;">
+                                {{ substr($user->name, 0, 1) }}
+                            </div>
+                        @endif
+                        <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-white rounded-circle"></span>
                     </div>
-                    <div class="progress glass-progress mb-2">
-                        <div class="progress-bar"
-                             role="progressbar"
-                             style="width: {{ $progressPercent }}%;"
-                             aria-valuenow="{{ $progressPercent }}"
-                             aria-valuemin="0"
-                             aria-valuemax="100"></div>
+                    <h5 class="fw-bold mb-1">{{ $profile->nama_lengkap ?? $user->name }}</h5>
+                    <p class="text-muted small mb-3">{{ $profile->nik ?? 'NIK Belum Lengkap' }}</p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('perawat.drh') }}" class="btn btn-light border btn-sm">Edit Profil</a>
                     </div>
-                    <div class="small text-muted">
-                        {{ $completed }} dari {{ $totalSections }} bagian DRH telah terisi.
-                    </div>
-                </div>
-
-                <div class="mt-3">
-                    <a href="{{ route('register.perawat') }}"
-                       class="btn btn-sm btn-primary w-100">
-                        Lengkapi / Perbarui DRH
-                    </a>
                 </div>
             </div>
-        </div>
+
+           <div class="card border-0 shadow-sm rounded-4 mb-4 text-white overflow-hidden position-relative" 
+     style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); transition: all 0.3s ease;">
+    
+    {{-- Efek Glow Halus (Opsional, agar tidak flat) --}}
+    <div class="position-absolute top-0 start-0 w-100 h-100 bg-white opacity-0" 
+         style="background: radial-gradient(circle at top right, rgba(255,255,255,0.15), transparent 60%);"></div>
+
+ <div class="card-body p-4 position-relative z-1">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <h6 class="fw-bold text-white-50 text-uppercase" style="font-size: 11px; letter-spacing: 1.5px;">
+            Status Pengajuan
+        </h6>
+        
+        {{-- Indikator titik berkedip untuk SEMUA status "sedang proses" --}}
+        @if($latestPengajuan && in_array($latestPengajuan->status, ['pending', 'method_selected', 'exam_passed', 'interview_scheduled']))
+            <span class="position-relative d-flex h-10 w-10">
+              <span class="animate-ping position-absolute d-inline-flex h-100 w-100 rounded-circle bg-warning opacity-75"></span>
+              <span class="position-relative d-inline-flex rounded-circle h-10 w-10 bg-warning" style="width:10px; height:10px;"></span>
+            </span>
+        @endif
     </div>
 
-    {{-- QUICK INFO + PROFILE --}}
-    <div class="row g-3 mt-1">
-        <div class="col-md-6">
-            <div class="dash-card p-3 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">Ringkasan Profil</h6>
-                    <span class="badge bg-light text-primary border">
-                        DRH Perorangan
-                    </span>
+    @if($latestPengajuan)
+        <h3 class="fw-bold mb-2">{{ ucfirst($latestPengajuan->tipe_sertifikat) }}</h3>
+        
+        <div class="d-flex align-items-center mb-4 flex-wrap gap-2">
+            
+            {{-- 1. Status DISETUJUI --}}
+            @if($latestPengajuan->status == 'disetujui')
+                <span class="badge bg-white text-success border border-white px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-check-circle-fill me-1"></i> Disetujui
+                </span>
+
+            {{-- 2. Status DITOLAK --}}
+            @elseif(in_array($latestPengajuan->status, ['ditolak', 'gagal']))
+                <span class="badge bg-white text-danger border border-white px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-x-circle-fill me-1"></i> Ditolak
+                </span>
+
+            {{-- 3. Status PROSES (Pending, Method, Exam, Interview) --}}
+            @else
+                <span class="badge bg-white text-warning border border-white px-3 py-2 rounded-pill fw-bold">
+                    <i class="bi bi-hourglass-split me-1"></i> 
+                    @switch($latestPengajuan->status)
+                        @case('pending')
+                            Menunggu Verifikasi
+                            @break
+                        @case('method_selected')
+                            Proses Sertifikasi
+                            @break
+                        @case('exam_passed')
+                            Lulus Ujian Tulis
+                            @break
+                        @case('interview_scheduled')
+                            Wawancara Dijadwalkan
+                            @break
+                        @default
+                            Sedang Diproses
+                    @endswitch
+                </span>
+            @endif
+
+            <span class="ms-2 small text-white-50">
+                {{ $latestPengajuan->created_at->format('d M Y') }}
+            </span>
+        </div>
+
+        <a href="{{ route('perawat.pengajuan.index') }}" 
+           class="btn btn-sm btn-outline-light w-100 rounded-pill py-2 fw-semibold"
+           style="border-color: rgba(255,255,255,0.4); backdrop-filter: blur(4px);">
+            Lihat Detail Pengajuan
+        </a>
+
+    @else
+        {{-- Tampilan Kosong (Empty State) --}}
+        <div class="text-center py-3">
+            <h5 class="fw-bold mb-2">Belum Ada Pengajuan</h5>
+            <p class="text-white-50 small mb-4">Mulai proses sertifikasi atau perpanjangan lisensi Anda sekarang.</p>
+            
+            <a href="{{ route('perawat.pengajuan.index') }}" 
+               class="btn btn-white text-primary w-100 fw-bold rounded-pill shadow-sm py-2">
+               + Buat Pengajuan Baru
+            </a>
+        </div>
+    @endif
+</div>
+</div>
+
+            {{-- 3. DOKUMEN LEGALITAS (Clean List) --}}
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h6 class="fw-bold mb-0">Legalitas Dokumen</h6>
                 </div>
-                <div class="small">
-                    <div class="mb-1">
-                        <span class="label">Nama</span>
-                        <span class="value">{{ $profile->nama_lengkap ?? $user->name }}</span>
-                    </div>
-                    <div class="mb-1">
-                        <span class="label">NIK</span>
-                        <span class="value">{{ $profile->nik ?? '—' }}</span>
-                    </div>
-                    <div class="mb-1">
-                        <span class="label">Tanggal Lahir</span>
-                        <span class="value">
-                            {{ $profile && $profile->tanggal_lahir ? $profile->tanggal_lahir : '—' }}
+                <div class="card-body p-4">
+                    {{-- STR --}}
+                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                        <div class="rounded p-2 me-3 {{ $legalitas['str']['data'] ? ($legalitas['str']['status'] == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger') : 'bg-light text-muted' }}">
+                            <i class="bi bi-card-heading fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-bold small">STR (Registrasi)</h6>
+                            <small class="text-muted" style="font-size: 11px;">
+                                {{ $legalitas['str']['data'] ? 'Exp: '.\Carbon\Carbon::parse($legalitas['str']['data']->tgl_expired)->format('d M Y') : 'Belum diupload' }}
+                            </small>
+                        </div>
+                        <span class="badge {{ $legalitas['str']['data'] ? ($legalitas['str']['status'] == 'active' ? 'bg-success' : 'bg-danger') : 'bg-secondary' }} rounded-pill" style="font-size: 10px;">
+                            {{ $legalitas['str']['msg'] }}
                         </span>
                     </div>
-                    <div class="mb-1">
-                        <span class="label">No. HP (WA)</span>
-                        <span class="value">{{ $profile->no_hp ?? '—' }}</span>
-                    </div>
-                    <div class="mb-1">
-                        <span class="label">Alamat</span>
-                        <span class="value">
-                            {{ $profile->alamat ?? 'Belum diisi' }}
+
+                    {{-- SIP --}}
+                    <div class="d-flex align-items-center">
+                        <div class="rounded p-2 me-3 {{ $legalitas['sip']['data'] ? ($legalitas['sip']['status'] == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger') : 'bg-light text-muted' }}">
+                            <i class="bi bi-file-medical fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-bold small">SIP (Praktik)</h6>
+                            <small class="text-muted" style="font-size: 11px;">
+                                {{ $legalitas['sip']['data'] ? 'Exp: '.\Carbon\Carbon::parse($legalitas['sip']['data']->tgl_expired)->format('d M Y') : 'Belum diupload' }}
+                            </small>
+                        </div>
+                        <span class="badge {{ $legalitas['sip']['data'] ? ($legalitas['sip']['status'] == 'active' ? 'bg-success' : 'bg-danger') : 'bg-secondary' }} rounded-pill" style="font-size: 10px;">
+                            {{ $legalitas['sip']['msg'] }}
                         </span>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- CARD INFO KOMPETENSI/ SERTIF (placeholder modul selanjutnya) --}}
-        <div class="col-md-6">
-            <div class="dash-card p-3 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">Kompetensi &amp; Sertifikasi</h6>
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                        Coming next – Modul 4 & 5
-                    </span>
-                </div>
-                <p class="small mb-2 text-muted">
-                    Di modul berikutnya, bagian ini akan menampilkan:
-                </p>
-                <ul class="small mb-1 ps-3">
-                    <li>Kompetensi klinis &amp; non klinis yang dimiliki</li>
-                    <li>Masa berlaku STR, sertifikat pelatihan, dan lainnya</li>
-                    <li>Reminder jadwal perpanjangan via Telegram</li>
-                </ul>
-                <p class="small text-muted mb-0">
-                    Sementara ini, fokus dulu melengkapi seluruh data DRH ya nande 💙
-                </p>
-            </div>
-        </div>
-    </div>
-
-    {{-- TABLE STATUS DRH --}}
-    <div class="dash-card mt-3 p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="mb-0">Status Kelengkapan DRH</h6>
-            <span class="small text-muted">Ikuti urutan dari atas agar rapi.</span>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width:40px;">No</th>
-                        <th>Bagian</th>
-                        <th style="width:140px;" class="text-center">Status</th>
-                        <th style="width:120px;" class="text-center">Jumlah Data</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($statusList as $i => $row)
-                        <tr>
-                            <td>{{ $i + 1 }}</td>
-                            <td>{{ $row['nama'] }}</td>
-                            <td class="text-center">
-                                @if($row['status'])
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                        Sudah diisi
-                                    </span>
-                                @else
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
-                                        Belum lengkap
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                @if(isset($row['jumlah']))
-                                    {{ $row['jumlah'] }}
-                                @else
-                                    —
-                                @endif
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        <div class="small text-muted mt-2">
-            * Status otomatis dihitung dari data yang sudah Anda isi di form registrasi / DRH.
         </div>
     </div>
 </div>
@@ -177,68 +310,67 @@
 
 @push('styles')
 <style>
-    .dash-card{
-        border-radius:18px;
-        background:rgba(255,255,255,0.96);
-        border:1px solid rgba(209,213,219,0.8);
-        box-shadow:0 18px 40px rgba(15,23,42,0.09);
-        backdrop-filter:blur(10px);
+    /* Styling khusus agar lebih clean */
+    body {
+        background-color: #f8f9fa; /* Light Gray Background */
     }
-    .dash-title{
-        font-size:18px;
-        font-weight:600;
-        color:#0f172a;
+    .stat-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        border: 1px solid rgba(0,0,0,0.02);
+        transition: transform 0.2s;
     }
-    .dash-subtitle{
-        font-size:13px;
-        color:#6b7280;
+    .stat-card:hover {
+        transform: translateY(-2px);
     }
-    .hero-icon-wrapper{
-        flex-shrink:0;
+    .icon-square {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
     }
-    .hero-icon-circle{
-        width:82px;
-        height:82px;
-        border-radius:26px;
-        background:radial-gradient(circle at 20% 0,#eff6ff,#1d4ed8);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        box-shadow:0 18px 40px rgba(37,99,235,0.45);
-        overflow:hidden;
+    .extra-small {
+        font-size: 0.75rem;
     }
-    .hero-icon-img{
-        width:100%;
-        height:100%;
-        object-fit:contain;
+    .section-item {
+        transition: background-color 0.2s;
     }
-    .glass-progress{
-        background:rgba(226,232,255,0.9);
-        border-radius:999px;
-        height:10px;
-    }
-    .glass-progress .progress-bar{
-        background:linear-gradient(135deg,#2563eb,#60a5fa);
-        border-radius:999px;
-    }
-    .label{
-        display:inline-block;
-        width:110px;
-        color:#6b7280;
-    }
-    .value{
-        font-weight:500;
-        color:#111827;
-    }
-
-    @media (max-width: 767.98px){
-        .dash-title{
-            font-size:16px;
-        }
-        .hero-icon-circle{
-            width:70px;
-            height:70px;
-        }
+    .section-item:hover {
+        background-color: #f8f9fa;
     }
 </style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('cleanChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar', // Bar lebih mudah dibaca untuk clean UI
+        data: {
+            labels: ['Pend.', 'Latih', 'Kerja', 'Org', 'Jasa'],
+            datasets: [{
+                label: 'Jumlah Data',
+                data: {!! json_encode($chartData['data']) !!},
+                backgroundColor: '#0d6efd',
+                borderRadius: 4,
+                barThickness: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { borderDash: [2, 4], drawBorder: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
 @endpush

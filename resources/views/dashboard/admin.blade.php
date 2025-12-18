@@ -1,355 +1,284 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Admin – DIKSERA')
+@section('title', 'Admin Dashboard')
 
 @section('content')
-    <div class="container-fluid py-3">
+<div class="container-fluid py-4">
 
-        {{-- HERO --}}
-        <div class="row g-3 align-items-stretch">
-            <div class="col-lg-8">
-                <div class="dash-card h-100 d-flex flex-column flex-md-row align-items-center p-3">
-                    <div class="hero-icon-wrapper me-md-3 mb-3 mb-md-0">
-                        <div class="hero-icon-circle">
-                            <img src="{{ asset('icon.png') }}" alt="DIKSERA" class="hero-icon-img">
-                        </div>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h1 class="dash-title mb-1">Halo Admin 👋</h1>
-                        <p class="dash-subtitle mb-2">
-                            Selamat datang di <strong>DIKSERA</strong><br>
-                            Panel kendali untuk monitoring, validasi, dan manajemen data perawat.
-                        </p>
-                        <div class="small text-muted">
-                            Kelola data, verifikasi DRH, pantau aktifitas pengguna, dan modifikasi sistem di sini.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- CARD METRIK UTAMA --}}
-            <div class="col-lg-4">
-                <div class="dash-card h-100 p-3 d-flex flex-column justify-content-between">
+    {{-- TOP STATS CARDS --}}
+    <div class="row g-4 mb-4">
+        {{-- Card 1 --}}
+        <div class="col-xl-3 col-sm-6">
+            <div class="dash-card p-4 h-100 shadow-sm border-start border-4 border-primary">
+                <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-muted">Total Perawat Terdaftar</span>
-                            <span class="badge bg-primary-subtle text-primary fw-semibold">
-                                {{ $totalPerawat }}
-                            </span>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-muted">Menunggu Verifikasi DRH</span>
-                            <span class="badge bg-warning-subtle text-warning fw-semibold">
-                                {{ $pendingVerifikasi }}
-                            </span>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-muted">Total Pengguna Sistem</span>
-                            <span class="badge bg-success-subtle text-success fw-semibold">
-                                {{ $totalUsers }}
-                            </span>
-                        </div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">Total Perawat</p>
+                        <h3 class="fw-bold mb-0 text-dark">{{ $stats['total_perawat'] }}</h3>
+                        <small class="text-success fw-bold"><i class="bi bi-arrow-up"></i> Active Users</small>
                     </div>
-
-                    <a href="{{ route('admin.perawat.index') }}" class="btn btn-sm btn-primary w-100 mt-3">
-                        Kelola Data Perawat
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        {{-- BARIS METRIK KOMITE TAMBAHAN --}}
-        <div class="row g-3 mt-1">
-            {{-- CARD ELIGIBLE --}}
-            <div class="col-md-3">
-                <div class="dash-card p-3 h-100 bg-info-subtle border-info">
-                    <span class="small text-muted d-block mb-1">Perawat Eligible Ujian</span>
-                    <h4 class="mb-0 text-info fw-bold">{{ $eligibleCount }}</h4>
-                    <div class="small mt-1 text-info-emphasis">
-                        <i class="bi bi-person-check"></i> Sudah diverifikasi & memenuhi syarat
-                    </div>
-                </div>
-            </div>
-            {{-- CARD LULUS FINAL --}}
-            <div class="col-md-3">
-                <div class="dash-card p-3 h-100 bg-success-subtle border-success">
-                    <span class="small text-muted d-block mb-1">Lulus (Tersertifikasi)</span>
-                    <h4 class="mb-0 text-success fw-bold">{{ $lulusFinalCount }}</h4>
-                    <div class="small mt-1 text-success-emphasis">
-                        <i class="bi bi-award"></i> Total perawat siap lisensi
-                    </div>
-                </div>
-            </div>
-            {{-- CARD LISENSI EXPIRED --}}
-            <div class="col-md-3">
-                <div class="dash-card p-3 h-100 bg-danger-subtle border-danger">
-                    <span class="small text-muted d-block mb-1">Lisensi Hampir Kadaluarsa</span>
-                    <h4 class="mb-0 text-danger fw-bold">{{ $almostExpired }}</h4>
-                    <div class="small mt-1 text-danger-emphasis">
-                        <i class="bi bi-clock-history"></i> Perlu segera perpanjangan
-                    </div>
-                </div>
-            </div>
-            {{-- BUTTON EXPORT LAPORAN --}}
-            <div class="col-md-3">
-                <div class="dash-card p-3 h-100 d-flex flex-column justify-content-center bg-primary-subtle border-primary">
-                    <h6 class="mb-2 text-primary">Laporan & Export Data</h6>
-                    <p class="small text-muted mb-3">
-                        Export data komprehensif (Perawat, Status, Ujian, Wawancara).
-                    </p>
-                    <a href="#" class="btn btn-primary btn-sm w-100">
-                        <i class="bi bi-file-earmark-arrow-down-fill me-1"></i> Export Laporan Final
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        {{-- ROW CHART & RINGKASAN --}}
-        <div class="row g-3 mt-1">
-            {{-- CHART KELULUSAN PER BULAN --}}
-            <div class="col-lg-6">
-                <div class="dash-card p-3 h-100">
-                    <h6 class="mb-3">Chart Kelulusan Ujian Per Bulan</h6>
-
-                    {{-- Area untuk Chart.js/ApexCharts --}}
-                    <div style="height: 300px;">
-                        <canvas id="monthlyPassChart"></canvas>
-                    </div>
-
-                    <div class="small text-muted mt-2">
-                        Total: {{ array_sum($monthlyPassRates) }} Kelulusan dalam 6 bulan terakhir.
-                    </div>
-                </div>
-            </div>
-
-            {{-- RINGKASAN VERIFIKASI --}}
-            <div class="col-lg-6">
-                <div class="dash-card p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0">Ringkasan Verifikasi DRH</h6>
-                        <span class="badge bg-light text-primary border">
-                            Monitoring
-                        </span>
-                    </div>
-
-                    <div class="small">
-                        <div class="mb-1 d-flex justify-content-between">
-                            <span class="label">Belum Diperiksa</span>
-                            <span class="value">{{ $pendingVerifikasi }}</span>
-                        </div>
-
-                        <div class="mb-1 d-flex justify-content-between">
-                            <span class="label">Sedang Diproses</span>
-                            <span class="value">{{ $onProgress }}</span>
-                        </div>
-
-                        <div class="mb-1 d-flex justify-content-between">
-                            <span class="label">Selesai Diverifikasi</span>
-                            <span class="value">{{ $verified }}</span>
-                        </div>
-
-                        <hr>
-
-                        <div class="mb-1 d-flex justify-content-between fw-bold">
-                            <span class="label">Total Perawat</span>
-                            <span class="value">{{ $totalPerawat }}</span>
-                        </div>
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
+                        <i class="bi bi-people-fill fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
-
-        {{-- ROW AKTIVITAS & MODUL --}}
-        <div class="row g-3 mt-1">
-
-            {{-- LOG & AKTIVITAS PENGGUNA --}}
-            <div class="col-md-6">
-                <div class="dash-card p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0">Aktivitas Terbaru</h6>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                            {{ $recentActivities->count() }} Log Terakhir
-                        </span>
+        {{-- Card 2 --}}
+        <div class="col-xl-3 col-sm-6">
+            <div class="dash-card p-4 h-100 shadow-sm border-start border-4 border-warning">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">Pending Verif</p>
+                        <h3 class="fw-bold mb-0 text-dark">{{ $stats['pending_verif'] }}</h3>
+                        <small class="text-muted">Butuh Review</small>
                     </div>
-
-                    <ul class="small mb-0 ps-3">
-                        @forelse($recentActivities as $act)
-                            <li class="mb-1">
-                                <strong>{{ $act->user->name }}</strong> —
-                                {{ $act->description }}
-                                <br>
-                                <span class="text-muted">{{ $act->created_at->diffForHumans() }}</span>
-                            </li>
-                        @empty
-                            <li class="text-muted">Belum ada aktivitas.</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-
-            {{-- TABLE STATUS MODUL --}}
-            <div class="col-md-6">
-                <div class="dash-card p-3 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0">Status Modul & Fitur</h6>
-                        <span class="small text-muted">Pantau progres implementasi modul DIKSERA.</span>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width:40px;">No</th>
-                                    <th>Modul</th>
-                                    <th class="text-center" style="width:140px;">Status</th>
-                                    <th class="text-center" style="width:120px;">Keterangan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($modulesStatus as $i => $row)
-                                    <tr>
-                                        <td>{{ $i + 1 }}</td>
-                                        <td>{{ $row['nama'] }}</td>
-                                        <td class="text-center">
-                                            @if ($row['status'] === 'ready')
-                                                <span
-                                                    class="badge bg-success-subtle text-success border border-success-subtle">
-                                                    Siap
-                                                </span>
-                                            @elseif($row['status'] === 'progress')
-                                                <span
-                                                    class="badge bg-warning-subtle text-warning border border-warning-subtle">
-                                                    Proses
-                                                </span>
-                                            @else
-                                                <span
-                                                    class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                                                    Coming soon
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            {{ $row['catatan'] ?? '—' }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="small text-muted mt-2">
-                        * Data ini dapat diatur dari konfigurasi admin.
+                    <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle">
+                        <i class="bi bi-clipboard-data fs-3"></i>
                     </div>
                 </div>
             </div>
         </div>
-
-
+        {{-- Card 3 --}}
+        <div class="col-xl-3 col-sm-6">
+            <div class="dash-card p-4 h-100 shadow-sm border-start border-4 border-success">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">Lulus Sertifikasi</p>
+                        <h3 class="fw-bold mb-0 text-dark">{{ $stats['lulus_total'] }}</h3>
+                        <small class="text-success">Verified</small>
+                    </div>
+                    <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle">
+                        <i class="bi bi-patch-check-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{-- Card 4 --}}
+        <div class="col-xl-3 col-sm-6">
+            <div class="dash-card p-4 h-100 shadow-sm border-start border-4 border-danger">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-uppercase fw-bold text-muted small mb-1">STR Expired</p>
+                        <h3 class="fw-bold mb-0 text-dark">{{ $stats['expired_str'] }}</h3>
+                        <small class="text-danger">Non-Active</small>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 text-danger p-3 rounded-circle">
+                        <i class="bi bi-exclamation-octagon-fill fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-@endsection
+
+    {{-- CHARTS SECTION --}}
+    <div class="row g-4 mb-4">
+        {{-- Chart Trend Bulanan --}}
+        <div class="col-lg-8">
+            <div class="dash-card p-4 h-100 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold mb-0 text-dark">Tren Pengajuan Sertifikasi ({{ date('Y') }})</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown">Filter</button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Tahun Ini</a></li>
+                            <li><a class="dropdown-item" href="#">Bulan Ini</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {{-- Chart Demografi --}}
+        <div class="col-lg-4">
+            <div class="dash-card p-4 h-100 shadow-sm">
+                <h6 class="fw-bold mb-4 text-dark">Demografi Perawat</h6>
+                
+                <ul class="nav nav-tabs mb-3" id="demoTab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active py-1 px-2 small" id="gender-tab" data-bs-toggle="tab" data-bs-target="#gender" type="button">Gender</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link py-1 px-2 small" id="edu-tab" data-bs-toggle="tab" data-bs-target="#edu" type="button">Pendidikan</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="demoTabContent">
+                    <div class="tab-pane fade show active" id="gender" role="tabpanel">
+                        <div style="height: 200px; position: relative;">
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                        <div class="text-center mt-3 small text-muted">
+                            Total: {{ $stats['total_perawat'] }} Data
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="edu" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-borderless small">
+                                <thead>
+                                    <tr class="text-muted border-bottom">
+                                        <th>Jenjang</th>
+                                        <th class="text-end">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($eduStats as $jenjang => $count)
+                                    <tr>
+                                        <td class="fw-bold text-dark">{{ $jenjang }}</td>
+                                        <td class="text-end">{{ $count }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- TABLES SECTION --}}
+    <div class="row g-4">
+        {{-- Pengajuan Terbaru --}}
+        <div class="col-lg-8">
+            <div class="dash-card p-4 h-100 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">Pengajuan Terbaru Masuk</h6>
+                    <a href="{{ route('admin.pengajuan.index') }}" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="bg-light small text-uppercase text-muted">
+                            <tr>
+                                <th class="ps-3 border-0 rounded-start">Perawat</th>
+                                <th class="border-0">Tanggal</th>
+                                <th class="border-0">Tipe</th>
+                                <th class="border-0 text-center">Status</th>
+                                {{-- <th class="pe-3 border-0 text-end rounded-end">Action</th> --}}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentPengajuans as $p)
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;font-size:12px;">
+                                            {{ substr($p->user->name, 0, 2) }}
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-bold text-dark" style="font-size: 13px;">{{ $p->user->profile->nama_lengkap ?? $p->user->name }}</span>
+                                            <span class="d-block text-muted" style="font-size: 11px;">{{ $p->user->email }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="small text-muted">{{ $p->created_at->format('d M Y') }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ $p->tipe_sertifikat }}</span></td>
+                                <td class="text-center">
+                                    @if($p->status == 'pending') <span class="badge bg-warning text-dark">Pending</span>
+                                    @elseif($p->status == 'disetujui') <span class="badge bg-success">Approved</span>
+                                    @else <span class="badge bg-danger">Rejected</span> @endif
+                                </td>
+                                {{-- <td class="text-end pe-3">
+                                    <a href="#" class="btn btn-sm btn-light border"><i class="bi bi-eye"></i></a>
+                                </td> --}}
+                            </tr>
+                            @empty
+                            <tr><td colspan="5" class="text-center text-muted py-3">Belum ada data.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- Jadwal Interview --}}
+        <div class="col-lg-4">
+            <div class="dash-card p-4 h-100 shadow-sm bg-primary text-white" style="background: linear-gradient(135deg, #2563eb, #1e40af);">
+                <h6 class="fw-bold mb-3 border-bottom border-white border-opacity-25 pb-2">Jadwal Interview</h6>
+                
+                <div class="list-group list-group-flush">
+                    @forelse($upcomingInterviews as $jadwal)
+                        <div class="d-flex align-items-center mb-3 p-2 rounded bg-white bg-opacity-10">
+                            <div class="bg-white text-primary rounded p-2 text-center me-3" style="min-width: 50px;">
+                                <span class="d-block fw-bold h5 mb-0">{{ $jadwal->waktu_wawancara->format('d') }}</span>
+                                <small class="d-block text-uppercase" style="font-size: 10px;">{{ $jadwal->waktu_wawancara->format('M') }}</small>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h6 class="mb-0 fw-bold text-truncate">{{ $jadwal->pengajuan->user->profile->nama_lengkap ?? 'User' }}</h6>
+                                <small class="text-white-50"><i class="bi bi-clock me-1"></i> {{ $jadwal->waktu_wawancara->format('H:i') }} WIB</small>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-4 text-white-50">
+                            <i class="bi bi-calendar-x fs-1 opacity-50"></i>
+                            <p class="mt-2 small">Tidak ada jadwal interview.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 @push('styles')
-    {{-- Seluruh style tetap sama --}}
-    <style>
-        .dash-card {
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid rgba(209, 213, 219, 0.8);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.09);
-            backdrop-filter: blur(10px);
-        }
-
-        .dash-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        .dash-subtitle {
-            font-size: 13px;
-            color: #6b7280;
-        }
-
-        .hero-icon-circle {
-            width: 82px;
-            height: 82px;
-            border-radius: 26px;
-            background: radial-gradient(circle at 20% 0, #eff6ff, #1d4ed8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.45);
-            overflow: hidden;
-        }
-
-        .hero-icon-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .label {
-            display: inline-block;
-            width: 150px;
-            color: #6b7280;
-        }
-
-        .value {
-            font-weight: 500;
-            color: #111827;
-        }
-
-        @media (max-width: 767.98px) {
-            .dash-title {
-                font-size: 16px;
-            }
-
-            .hero-icon-circle {
-                width: 70px;
-                height: 70px;
-            }
-        }
-    </style>
+<style>
+    .dash-card {
+        background: white; border-radius: 12px; border: none;
+    }
+    .avatar { flex-shrink: 0; }
+</style>
 @endpush
 
 @push('scripts')
-    {{-- Script untuk Chart Kelulusan Bulanan --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('monthlyPassChart');
-            const data = {
-                labels: {!! json_encode(array_keys($monthlyPassRates)) !!},
-                datasets: [{
-                    label: 'Jumlah Lulus Ujian',
-                    data: {!! json_encode(array_values($monthlyPassRates)) !!},
-                    backgroundColor: 'rgba(29, 78, 216, 0.7)',
-                    borderColor: 'rgba(29, 78, 216, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                }]
-            };
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 1. CHART TREND
+    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($chartTrend['labels']) !!},
+            datasets: [
+                {
+                    label: 'Total Pengajuan',
+                    data: {!! json_encode($chartTrend['total']) !!},
+                    borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4, fill: true
+                },
+                {
+                    label: 'Disetujui',
+                    data: {!! json_encode($chartTrend['approved']) !!},
+                    borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.0)',
+                    tension: 0.4, borderDash: [5, 5]
                 }
-            });
-        });
-    </script>
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true, grid: { borderDash: [2, 2] } }, x: { grid: { display: false } } }
+        }
+    });
+
+    // 2. CHART GENDER
+    const ctxGender = document.getElementById('genderChart').getContext('2d');
+    new Chart(ctxGender, {
+        type: 'doughnut',
+        data: {
+            labels: ['Laki-laki', 'Perempuan'],
+            datasets: [{
+                data: [{{ $chartGender['Laki-laki'] }}, {{ $chartGender['Perempuan'] }}],
+                backgroundColor: ['#3b82f6', '#ec4899'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } }
+        }
+    });
+</script>
 @endpush
+@endsection
