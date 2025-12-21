@@ -14,11 +14,16 @@ class PerawatPekerjaan extends Model
     protected $fillable = [
         'user_id',
         'nama_instansi',
+        'unit_kerja',
         'jabatan',
         'tahun_mulai',
         'tahun_selesai',
         'keterangan',
-         'dokumen_path', 
+        'dokumen_path',
+        'bidang',
+        'kfk',
+        'tgl_mulai',
+        'tgl_diselenggarakan',
     ];
 
     /**

@@ -205,38 +205,8 @@
                         @csrf
 
                         <div class="row g-3">
-                            {{-- Pilih Perawat (Multi Select) --}}
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label mb-0">Pilih Perawat (Bisa Banyak) <span class="required-star">*</span></label>
-                                    
-                                    {{-- Tombol Aksi --}}
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-select-all">
-                                            <i class="bi bi-check-all"></i> Pilih Semua
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btn-reset-all">
-                                            <i class="bi bi-x-circle"></i> Reset
-                                        </button>
-                                    </div>
-                                </div>
 
-                                <div class="mb-1">
-                                    <select name="user_ids[]" id="choice-users" class="form-select" multiple required>
-                                        {{-- Option kosong untuk placeholder --}}
-                                        <option value="">Cari Nama Perawat...</option> 
-                                        @foreach ($users as $user)
-                                            <option value="{{ $user->id }}"
-                                                {{ collect(old('user_ids'))->contains($user->id) ? 'selected' : '' }}>
-                                                {{ $user->name }} ({{ $user->email }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="form-text">Nomor lisensi akan digenerate otomatis berurutan untuk setiap perawat yang dipilih.</div>
-                            </div>
-
-                            {{-- 2. Aturan Perpanjangan --}}
+                            {{-- 1. Aturan Perpanjangan (PINDAH KE ATAS) --}}
                             <div class="col-12">
                                 <div class="metode-wrapper">
                                     <div class="d-flex gap-3 align-items-center">
@@ -261,11 +231,111 @@
                                                             {{ old('metode_perpanjangan') == 'pg_interview' ? 'selected' : '' }}>
                                                             Ujian Tulis + Wawancara
                                                         </option>
+                                                        <option value="interview_only"
+                                                            {{ old('metode_perpanjangan') == 'interview_only' ? 'selected' : '' }}>
+                                                            Hanya Wawancara
+                                                        </option>
                                                     </select>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            {{-- 2. Pilih Perawat (Multi Select) (PINDAH KE BAWAH METODE) --}}
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Pilih Perawat (Bisa Banyak) <span
+                                            class="required-star">*</span></label>
+
+                                    {{-- Tombol Aksi --}}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-select-all">
+                                            <i class="bi bi-check-all"></i> Pilih Semua
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btn-reset-all">
+                                            <i class="bi bi-x-circle"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-1">
+                                    <select name="user_ids[]" id="choice-users" class="form-select" multiple required>
+                                        {{-- Option kosong untuk placeholder --}}
+                                        <option value="">Cari Nama Perawat...</option>
+                                        @foreach ($users as $user)
+                                            <option value="{{ $user->id }}"
+                                                {{ collect(old('user_ids'))->contains($user->id) ? 'selected' : '' }}>
+                                                {{ $user->name }} ({{ $user->unit_kerja ?? 'Unit Tidak Ada' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-text">Nomor lisensi akan digenerate otomatis berurutan untuk setiap perawat
+                                    yang dipilih.</div>
+                            </div>
+
+                            <div class="col-12">
+                                <hr class="border-light m-0">
+                            </div>
+
+                            {{-- BAGIAN BARU: Detail Bidang & KFK --}}
+                            <div class="col-md-6">
+                                <label class="form-label">Bidang Keahlian <span class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                    <input type="text" name="bidang" class="form-control" value="{{ old('bidang') }}"
+                                        placeholder="Contoh: Keperawatan Anak" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Jenjang KFK (PK) <span class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-bar-chart-steps"></i></span>
+                                    <select name="kfk" class="form-select" required>
+                                        <option value="">Pilih Jenjang KFK...</option>
+                                        @php
+                                            $kfks = [
+                                                'PK 1',
+                                                'PK 1.5',
+                                                'PK 2',
+                                                'PK 2.5',
+                                                'PK 3',
+                                                'PK 3.5',
+                                                'PK 4',
+                                                'PK 4.5',
+                                                'PK 5',
+                                            ];
+                                        @endphp
+                                        @foreach ($kfks as $kfk)
+                                            <option value="{{ $kfk }}"
+                                                {{ old('kfk') == $kfk ? 'selected' : '' }}>
+                                                {{ $kfk }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- BAGIAN BARU: Tanggal Pelaksanaan --}}
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal Mulai <span class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="date" name="tgl_mulai" class="form-control"
+                                        value="{{ old('tgl_mulai') }}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal Selesai Diselenggarakan <span
+                                        class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                                    <input type="date" name="tgl_diselenggarakan" class="form-control"
+                                        value="{{ old('tgl_diselenggarakan') }}" required>
                                 </div>
                             </div>
 
@@ -278,8 +348,8 @@
                                 <label class="form-label">Nama Lisensi <span class="required-star">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-card-heading"></i></span>
-                                    <input type="text" name="nama" class="form-control" value="{{ old('nama') }}"
-                                        placeholder="Contoh: STR, SIP" required>
+                                    <input type="text" name="nama" class="form-control"
+                                        value="{{ old('nama') }}" placeholder="Contoh: STR, SIP" required>
                                 </div>
                             </div>
 
@@ -287,8 +357,8 @@
                                 <label class="form-label">Lembaga Penerbit <span class="required-star">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-building"></i></span>
-                                    <input type="text" name="lembaga" class="form-control" value="{{ old('lembaga') }}"
-                                        placeholder="Contoh: Kemenkes RI" required>
+                                    <input type="text" name="lembaga" class="form-control"
+                                        value="{{ old('lembaga') }}" placeholder="Contoh: Kemenkes RI" required>
                                 </div>
                             </div>
 
@@ -330,7 +400,7 @@
 @push('scripts')
     {{-- Load JS Choices --}}
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 1. Ambil Element
@@ -355,11 +425,11 @@
             // 4. LOGIKA TOMBOL PILIH SEMUA
             btnSelectAll.addEventListener('click', function(e) {
                 e.preventDefault(); // Mencegah form submit tidak sengaja
-                
+
                 // Trik: Hapus dulu semua (biar bersih), baru masukkan semua
-                choices.removeActiveItems(); 
-                choices.setChoiceByValue(allUserIds); 
-                
+                choices.removeActiveItems();
+                choices.setChoiceByValue(allUserIds);
+
                 // Debugging (Cek di Console browser jika masih gagal)
                 console.log('Mencoba memilih ID:', allUserIds);
             });

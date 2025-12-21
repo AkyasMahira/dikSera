@@ -173,7 +173,7 @@
 @endpush
 
 @section('content')
-    <div class="container py-4"> {{-- Padding container dikurangi --}}
+    <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-md-10 col-lg-8">
 
@@ -204,26 +204,13 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="row g-3"> {{-- Gap antar elemen diperkecil (g-3) --}}
+                        <div class="row g-3">
 
-                            {{-- 1. Pemilik Lisensi --}}
-                            <div class="col-12">
-                                <label class="form-label">Pemilik Lisensi <span class="required-star">*</span></label>
-                                <select name="user_id" id="choice-user-single" class="form-select" required>
-                                    <option value="">Pilih Perawat...</option>
-                                    @foreach ($users as $user)
-                                        <option value="{{ $user->id }}"
-                                            {{ old('user_id', $data->user_id) == $user->id ? 'selected' : '' }}>
-                                            {{ $user->name }} ({{ $user->email }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- 2. Aturan Perpanjangan --}}
+                            {{-- 1. Aturan Perpanjangan (PINDAH KE ATAS) --}}
                             <div class="col-12">
                                 <div class="metode-wrapper">
                                     <div class="d-flex gap-3 align-items-center">
+                                        {{-- Ikon warna warning (orange) --}}
                                         <i class="bi bi-sliders text-warning fs-5"></i>
                                         <div class="flex-grow-1">
                                             <div class="row align-items-center">
@@ -234,6 +221,7 @@
                                                         untuk lisensi ini.</div>
                                                 </div>
                                                 <div class="col-md-5">
+                                                    {{-- Border warning agar sesuai tema --}}
                                                     <select name="metode_perpanjangan"
                                                         class="form-select border-warning fw-bold text-dark form-select-sm"
                                                         required>
@@ -245,6 +233,10 @@
                                                             {{ old('metode_perpanjangan', $data->metode_perpanjangan) == 'pg_interview' ? 'selected' : '' }}>
                                                             Ujian Tulis + Wawancara
                                                         </option>
+                                                        <option value="interview_only"
+                                                            {{ old('metode_perpanjangan', $data->metode_perpanjangan) == 'interview_only' ? 'selected' : '' }}>
+                                                            Hanya Wawancara
+                                                        </option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -253,11 +245,78 @@
                                 </div>
                             </div>
 
+                            {{-- 2. Pemilik Lisensi --}}
+                            <div class="col-12">
+                                <label class="form-label">Pemilik Lisensi <span class="required-star">*</span></label>
+                                <select name="user_id" id="choice-user-single" class="form-select" required>
+                                    <option value="">Pilih Perawat...</option>
+                                    @foreach ($users as $user)
+                                        <option value="{{ $user->id }}"
+                                            {{ old('user_id', $data->user_id) == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }} ({{ $user->unit_kerja ?? 'Unit Tidak Ada' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             <div class="col-12">
                                 <hr class="border-light m-0">
                             </div>
 
-                            {{-- 3. Identitas Lisensi --}}
+                            {{-- 3. Detail Bidang & KFK (BARU) --}}
+                            <div class="col-md-6">
+                                <label class="form-label">Bidang Keahlian <span class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                    <input type="text" name="bidang" class="form-control"
+                                        value="{{ old('bidang', $data->bidang) }}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Jenjang KFK (PK) <span class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-bar-chart-steps"></i></span>
+                                    <select name="kfk" class="form-select" required>
+                                        <option value="">Pilih Jenjang KFK...</option>
+                                        @php
+                                            $kfks = ['PK 1', 'PK 1.5', 'PK 2', 'PK 2.5', 'PK 3', 'PK 3.5', 'PK 4', 'PK 4.5', 'PK 5'];
+                                        @endphp
+                                        @foreach ($kfks as $kfk)
+                                            <option value="{{ $kfk }}"
+                                                {{ old('kfk', $data->kfk) == $kfk ? 'selected' : '' }}>
+                                                {{ $kfk }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- 4. Tanggal Pelaksanaan (BARU) --}}
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal Mulai <span class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="date" name="tgl_mulai" class="form-control"
+                                        value="{{ old('tgl_mulai', $data->tgl_mulai) }}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal Selesai Diselenggarakan <span
+                                        class="required-star">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                                    <input type="date" name="tgl_diselenggarakan" class="form-control"
+                                        value="{{ old('tgl_diselenggarakan', $data->tgl_diselenggarakan) }}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <hr class="border-light m-0">
+                            </div>
+
+                            {{-- 5. Identitas Lisensi --}}
                             <div class="col-md-6">
                                 <label class="form-label">Nama Lisensi <span class="required-star">*</span></label>
                                 <div class="input-group">
@@ -287,17 +346,23 @@
                                     edit jika perlu.</div>
                             </div>
 
-                            {{-- 4. Tanggal --}}
+                            {{-- 6. Tanggal Masa Berlaku --}}
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal Terbit <span class="required-star">*</span></label>
-                                <input type="date" name="tgl_terbit" class="form-control"
-                                    value="{{ old('tgl_terbit', $data->tgl_terbit) }}" required>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                                    <input type="date" name="tgl_terbit" class="form-control"
+                                        value="{{ old('tgl_terbit', $data->tgl_terbit) }}" required>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal Expired <span class="required-star">*</span></label>
-                                <input type="date" name="tgl_expired" class="form-control"
-                                    value="{{ old('tgl_expired', $data->tgl_expired) }}" required>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-calendar-x"></i></span>
+                                    <input type="date" name="tgl_expired" class="form-control"
+                                        value="{{ old('tgl_expired', $data->tgl_expired) }}" required>
+                                </div>
                             </div>
 
                         </div>

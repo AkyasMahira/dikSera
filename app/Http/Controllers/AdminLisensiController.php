@@ -10,50 +10,50 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminLisensiController extends Controller
 {
-    public function lisensiCreate()
-    {
-        $users = User::where('role', 'perawat')->orderBy('name', 'asc')->get();
-        return view('admin.lisensi.create', compact('users'));
-    }
+   public function lisensiCreate()
+{
+    $users = User::where('role', 'perawat')
+        ->leftJoin('perawat_pekerjaans', 'users.id', '=', 'perawat_pekerjaans.user_id')
+        ->select(
+            'users.id',
+            'users.name',
+            'users.email',
+            'perawat_pekerjaans.unit_kerja'
+        )
+        ->orderBy('users.name', 'asc')
+        ->get();
+
+    return view('admin.lisensi.create', compact('users'));
+}
 
     public function lisensiStore(Request $request)
     {
-        // 1. Validasi (Hapus 'nomor' dari sini)
+
         $request->validate([
             'user_ids'            => 'required|array',
             'user_ids.*'          => 'exists:users,id',
-            'metode_perpanjangan' => 'required|in:pg_only,pg_interview',
+            'metode_perpanjangan' => 'required|in:pg_only,pg_interview,interview_only',
             'nama'                => 'required|string|max:100',
             'lembaga'             => 'required|string|max:100',
-            // 'nomor' dihapus karena auto-generate
+            'bidang'              => 'required|string|max:100',
+            'kfk'                 => 'required|in:PK 1,PK 1.5,PK 2,PK 2.5,PK 3,PK 3.5,PK 4,PK 4.5,PK 5',
+            'tgl_mulai'           => 'required|date',
+            'tgl_diselenggarakan' => 'required|date',
             'tgl_terbit'          => 'required|date',
             'tgl_expired'         => 'required|date',
         ]);
 
-        // Ambil data umum
+
         $commonData = $request->except(['_token', 'user_ids']);
-
-        // Cari ID terakhir untuk penomoran awal
-        // Jika belum ada data, mulai dari 0
         $lastId = PerawatLisensi::max('id') ?? 0;
-
         $count = 0;
         foreach ($request->user_ids as $index => $userId) {
-
-            // LOGIKA NOMOR OTOMATIS BERURUTAN
-            // Urutan = ID Terakhir + 1 + Index Loop saat ini
             $urutan = $lastId + 1 + $count;
-
-            // Format: NAMA-TAHUN-URUTAN (Contoh: STR-2025-0001)
-            // strtoupper untuk huruf besar, sprintf untuk padding 0 (0001)
             $nomorOtomatis = strtoupper($request->nama) . '-' . date('Y') . '-' . sprintf('%04d', $urutan);
-
-            // Gabungkan data
             $data = array_merge($commonData, [
                 'user_id' => $userId,
-                'nomor'   => $nomorOtomatis // Masukkan nomor otomatis ke sini
+                'nomor'   => $nomorOtomatis
             ]);
-
             PerawatLisensi::create($data);
             $count++;
         }
@@ -71,28 +71,42 @@ class AdminLisensiController extends Controller
         return view('admin.lisensi.index', compact('data'));
     }
 
-    public function lisensiEdit($id)
-    {
-        $data = PerawatLisensi::findOrFail($id);
-        $users = User::where('role', 'perawat')->orderBy('name', 'asc')->get();
-        return view('admin.lisensi.edit', compact('data', 'users'));
-    }
+   public function lisensiEdit($id)
+{
+    $data = PerawatLisensi::findOrFail($id);
+    $users = User::where('role', 'perawat')
+        ->leftJoin('perawat_pekerjaans', 'users.id', '=', 'perawat_pekerjaans.user_id')
+        ->select(
+            'users.id',
+            'users.name',
+            'perawat_pekerjaans.unit_kerja',
+
+
+        )
+        ->orderBy('users.name', 'asc')
+        ->get();
+
+    return view('admin.lisensi.edit', compact('data', 'users'));
+}
 
     public function lisensiUpdate(Request $request, $id)
-    {
-        $lisensi = PerawatLisensi::findOrFail($id);
+{
+    $lisensi = PerawatLisensi::findOrFail($id);
 
-        // Untuk update, nomor boleh diubah manual jika perlu, atau biarkan validasi string biasa
-        $request->validate([
-            'user_id'     => 'required|exists:users,id',
-            'nama'        => 'required|string|max:100',
-            'lembaga'     => 'required|string|max:100',
-            'nomor'       => 'required|string|max:100', // Update tetap butuh nomor (edit manual)
-            'tgl_terbit'  => 'required|date',
-            'tgl_expired' => 'required|date',
-            'dokumen'     => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120',
-        ]);
-
+    $request->validate([
+        'user_id'             => 'required|exists:users,id',
+        'nama'                => 'required|string|max:100',
+        'lembaga'             => 'required|string|max:100',
+        'nomor'               => 'required|string|max:100',
+        'metode_perpanjangan' => 'required|in:pg_only,pg_interview,interview_only',
+        'tgl_terbit'          => 'required|date',
+        'tgl_expired'         => 'required|date',
+        'dokumen'             => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120',
+        'bidang'              => 'required|string|max:100',
+        'kfk'                 => 'required|in:PK 1,PK 1.5,PK 2,PK 2.5,PK 3,PK 3.5,PK 4,PK 4.5,PK 5',
+        'tgl_mulai'           => 'required|date',
+        'tgl_diselenggarakan' => 'required|date',
+    ]);
         $data = $request->except(['dokumen', '_token', '_method']);
         $data['user_id'] = $request->user_id;
 
@@ -117,4 +131,6 @@ class AdminLisensiController extends Controller
         $data->delete();
         return redirect()->route('admin.lisensi.index')->with('swal', ['icon'=>'success', 'title'=>'Berhasil', 'text'=>'Lisensi dihapus.']);
     }
+
+
 }
