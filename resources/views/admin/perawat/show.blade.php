@@ -98,7 +98,7 @@
             <i class="bi bi-arrow-left"></i> Kembali ke Daftar
         </a>
     </div>
-
+    
     {{-- 1. HEADER PROFIL UTAMA --}}
     <div class="content-card mb-4">
         <div class="row g-4">
@@ -132,28 +132,30 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <div class="data-label">Nomor Induk Kependudukan (NIK)</div>
-                            <div class="data-value font-monospace">{{ $profile->nik ?? '-' }}</div>
+                            {{-- Pakai optional() --}}
+                            <div class="data-value font-monospace">{{ optional($profile)->nik ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <div class="data-label">Tempat Lahir</div>
-                                <div class="data-value">{{ $profile->tempat_lahir ?? '-' }}</div>
+                                <div class="data-value">{{ optional($profile)->tempat_lahir ?? '-' }}</div>
                             </div>
                             <div class="col-6 mb-3">
                                 <div class="data-label">Tanggal Lahir</div>
                                 <div class="data-value">
-                                    {{ $profile->tanggal_lahir ? date('d M Y', strtotime($profile->tanggal_lahir)) : '-' }}
+                                    {{-- Cek optional dulu sebelum format date --}}
+                                    {{ optional($profile)->tanggal_lahir ? date('d M Y', strtotime($profile->tanggal_lahir)) : '-' }}
                                 </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <div class="data-label">Jenis Kelamin</div>
-                                <div class="data-value">{{ $profile->jenis_kelamin ?? '-' }}</div>
+                                <div class="data-value">{{ optional($profile)->jenis_kelamin ?? '-' }}</div>
                             </div>
                             <div class="col-6 mb-3">
                                 <div class="data-label">Agama</div>
-                                <div class="data-value">{{ $profile->agama ?? '-' }}</div>
+                                <div class="data-value">{{ optional($profile)->agama ?? '-' }}</div>
                             </div>
                         </div>
                     </div>
@@ -162,24 +164,25 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <div class="data-label">Alamat Domisili</div>
-                            <div class="data-value">{{ $profile->alamat ?? '-' }}</div>
+                            <div class="data-value">{{ optional($profile)->alamat ?? '-' }}</div>
                         </div>
                         <div class="mb-3">
                             <div class="data-label">Nomor HP / WhatsApp</div>
                             <div class="data-value text-success">
-                                <i class="bi bi-whatsapp me-1"></i> {{ $profile->no_hp ?? '-' }}
+                                <i class="bi bi-whatsapp me-1"></i> {{ optional($profile)->no_hp ?? '-' }}
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <div class="data-label">Fisik (TB / BB)</div>
                                 <div class="data-value">
-                                    {{ $profile->tinggi_badan ?? '-' }} cm / {{ $profile->berat_badan ?? '-' }} kg
+                                    {{ optional($profile)->tinggi_badan ?? '-' }} cm /
+                                    {{ optional($profile)->berat_badan ?? '-' }} kg
                                 </div>
                             </div>
                             <div class="col-6 mb-3">
                                 <div class="data-label">Golongan Darah</div>
-                                <div class="data-value">{{ $profile->golongan_darah ?? '-' }}</div>
+                                <div class="data-value">{{ optional($profile)->golongan_darah ?? '-' }}</div>
                             </div>
                         </div>
                     </div>
