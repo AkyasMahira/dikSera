@@ -97,10 +97,19 @@ class AdminPengajuanController extends Controller
                      'tgl_expired' => now()->addYears(3)
                  ]);
              }
-
              return back()->with('success', "Nilai (Skor: {$examResult->total_nilai}) disetujui & Status Ujian diubah LULUS. Proses selesai.");
-         }
-         else {
+         } else if ($pengajuan->metode == 'interview_only') {
+             $pengajuan->update(['status' => 'completed']);
+             $user = $pengajuan->user;
+             $lisensi = $pengajuan->lisensiLama;
+             $newTerbit = $lisensi && $lisensi->tgl_terbit ? $lisensi->tgl_terbit : now();
+             $newExpired = \Carbon\Carbon::parse($newTerbit)->addYears(3);
+             $user->lisensis()->update([
+                 'tgl_terbit' => $newTerbit,
+                 'tgl_expired' => $newExpired
+             ]);
+             return back()->with('success', "Nilai wawancara disetujui. Semua lisensi diperpanjang hingga " . $newExpired->format('d-m-Y'));
+         } else {
              $pengajuan->update(['status' => 'exam_passed']);
              return back()->with('success', "Nilai (Skor: {$examResult->total_nilai}) disetujui & Status Ujian diubah LULUS. Menunggu jadwal wawancara.");
          }
@@ -124,13 +133,21 @@ class AdminPengajuanController extends Controller
 
         $pengajuan->update(['status' => 'completed']);
 
-        if ($pengajuan->lisensiLama) {
+        if ($pengajuan->metode == 'interview_only') {
+            $user = $pengajuan->user;
+            $lisensi = $pengajuan->lisensiLama;
+            $newTerbit = $lisensi && $lisensi->tgl_terbit ? $lisensi->tgl_terbit : now();
+            $newExpired = \Carbon\Carbon::parse($newTerbit)->addYears(3);
+            $user->lisensis()->update([
+                'tgl_terbit' => $newTerbit,
+                'tgl_expired' => $newExpired
+            ]);
+        } else if ($pengajuan->lisensiLama) {
             $pengajuan->lisensiLama->update([
                 'tgl_terbit'  => now(),
                 'tgl_expired' => now()->addYears(3)
             ]);
         }
-
         return back()->with('success', 'Proses perpanjangan selesai sepenuhnya & Lisensi diperbarui.');
     }
 
@@ -190,6 +207,16 @@ class AdminPengajuanController extends Controller
                             'tgl_expired' => now()->addYears(3)
                         ]);
                     }
+                } else if ($pengajuan->metode == 'interview_only') {
+                    $pengajuan->update(['status' => 'completed']);
+                    $user = $pengajuan->user;
+                    $lisensi = $pengajuan->lisensiLama;
+                    $newTerbit = $lisensi && $lisensi->tgl_terbit ? $lisensi->tgl_terbit : now();
+                    $newExpired = \Carbon\Carbon::parse($newTerbit)->addYears(3);
+                    $user->lisensis()->update([
+                        'tgl_terbit' => $newTerbit,
+                        'tgl_expired' => $newExpired
+                    ]);
                 } else {
                     $pengajuan->update(['status' => 'exam_passed']);
                 }
