@@ -27,20 +27,35 @@ class UserFormController extends Controller
 
         $forms = collect();
         if ($pengajuanAktif && $pengajuanAktif->lisensiLama) {
-            // Filter form berdasarkan nama lisensi
-            $forms = Form::where('status', 'publish')
+            // Cari form yang relevan dengan nama lisensi (cari kata di judul).
+            $baseQuery = Form::where('status', 'publish')
                 ->where(function ($query) use ($user) {
                     $query->where('target_peserta', 'semua')
                         ->orWhereHas('participants', function ($q) use ($user) {
                             $q->where('users.id', $user->id);
                         });
-                })
-                ->where('nama', $pengajuanAktif->lisensiLama->nama)
+                });
+
+            $namaLisensi = $pengajuanAktif->lisensiLama->nama;
+
+            $forms = (clone $baseQuery)
+                ->where('judul', 'LIKE', "%{$namaLisensi}%")
                 ->with(['examResults' => function ($query) use ($user) {
                     $query->where('user_id', $user->id);
                 }])
                 ->orderBy('waktu_mulai', 'desc')
                 ->get();
+
+            // Jika tidak ditemukan form yang mengandung nama lisensi di judul,
+            // tampilkan semua form publish yang ditujukan untuk user.
+            if ($forms->isEmpty()) {
+                $forms = $baseQuery
+                    ->with(['examResults' => function ($query) use ($user) {
+                        $query->where('user_id', $user->id);
+                    }])
+                    ->orderBy('waktu_mulai', 'desc')
+                    ->get();
+            }
         }
 
         return view('perawat.ujian_aktif.index', compact('forms', 'now'));
