@@ -194,7 +194,17 @@
 
                                         @php
                                             $selectedValue = old('type_perawat', $profile->type_perawat ?? []);
-                                            if (!is_array($selectedValue)) {
+                                            // Normalize old value to array — accept array, comma/string, or JSON
+                                            if (is_string($selectedValue)) {
+                                                $decoded = json_decode($selectedValue, true);
+                                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                                    $selectedValue = $decoded;
+                                                } elseif (strpos($selectedValue, ',') !== false) {
+                                                    $selectedValue = array_map('trim', explode(',', $selectedValue));
+                                                } else {
+                                                    $selectedValue = $selectedValue ? [$selectedValue] : [];
+                                                }
+                                            } elseif (!is_array($selectedValue)) {
                                                 $selectedValue = $selectedValue ? [$selectedValue] : [];
                                             }
                                         @endphp
