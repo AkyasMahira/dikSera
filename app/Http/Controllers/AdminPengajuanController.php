@@ -294,4 +294,32 @@ class AdminPengajuanController extends Controller
 
         return back()->with('success', $msg);
     }
+
+    public function destroy($id)
+    {
+        $pengajuan = PengajuanSertifikat::findOrFail($id);
+
+        // Hapus data
+        $pengajuan->delete();
+
+        return back()->with('success', 'Data pengajuan berhasil dihapus permanen.');
+    }
+
+    /**
+     * Menghapus banyak data sekaligus (Bulk Delete).
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:pengajuan_sertifikats,id'
+        ]);
+
+        $ids = $request->ids;
+
+        // Hapus data berdasarkan array ID
+        $count = PengajuanSertifikat::whereIn('id', $ids)->delete();
+
+        return back()->with('success', "Berhasil menghapus $count data pengajuan secara permanen.");
+    }
 }
