@@ -515,28 +515,30 @@ class PerawatDrhController extends Controller
     }
 
     public function keluargaStore(Request $request)
-    {
-        $user = $this->currentPerawat();
-        if (!$user) return redirect('/');
+{
+    $user = $this->currentPerawat();
+    if (!$user) return redirect('/');
 
-        $request->validate([
-            'hubungan'      => 'required|string|max:50',
-            'nama'          => 'required|string|max:150',
-            'tanggal_lahir' => 'nullable|date',
-            'pekerjaan'     => 'nullable|string|max:150',
-        ]);
+    $request->validate([
+        'hubungan'      => 'required|string|max:50',
+        'nama'          => 'required|string|max:150',
+        'tanggal_lahir' => 'nullable|date',
+        'pekerjaan'     => 'nullable|string|max:150',
+        'no_darurat'    => 'nullable|string|max:20', // <--- Tambahkan validasi
+    ]);
 
-        $data = $request->only('hubungan', 'nama', 'tanggal_lahir', 'pekerjaan');
-        $data['user_id'] = $user->id;
+    // Tambahkan 'no_darurat' ke request->only
+    $data = $request->only('hubungan', 'nama', 'tanggal_lahir', 'pekerjaan', 'no_darurat');
+    $data['user_id'] = $user->id;
 
-        PerawatKeluarga::create($data);
+    PerawatKeluarga::create($data);
 
-        return redirect()->route('perawat.keluarga.index')->with('swal', [
-            'icon' => 'success',
-            'title' => 'Berhasil',
-            'text' => 'Data keluarga ditambahkan.'
-        ]);
-    }
+    return redirect()->route('perawat.keluarga.index')->with('swal', [
+        'icon' => 'success',
+        'title' => 'Berhasil',
+        'text' => 'Data keluarga ditambahkan.'
+    ]);
+}
 
     public function keluargaEdit($id)
     {
@@ -547,26 +549,41 @@ class PerawatDrhController extends Controller
     }
 
     public function keluargaUpdate(Request $request, $id)
-    {
-        $user = $this->currentPerawat();
-        if (!$user) return redirect('/');
-        $keluarga = PerawatKeluarga::where('user_id', $user->id)->findOrFail($id);
+{
+    // 1. DEFINISI USER (Ini yang menyebabkan error sebelumnya jika hilang)
+    $user = $this->currentPerawat();
 
-        $request->validate([
-            'hubungan'      => 'required|string|max:50',
-            'nama'          => 'required|string|max:150',
-            'tanggal_lahir' => 'nullable|date',
-            'pekerjaan'     => 'nullable|string|max:150',
-        ]);
+    // 2. Cek jika user tidak ditemukan
+    if (!$user) return redirect('/');
 
-        $keluarga->update($request->only('hubungan', 'nama', 'tanggal_lahir', 'pekerjaan'));
+    // 3. Cari data keluarga berdasarkan ID dan User ID (security)
+    $keluarga = PerawatKeluarga::where('user_id', $user->id)->findOrFail($id);
 
-        return redirect()->route('perawat.keluarga.index')->with('swal', [
-            'icon' => 'success',
-            'title' => 'Berhasil',
-            'text' => 'Data keluarga diperbarui.'
-        ]);
-    }
+    // 4. Validasi Input
+    $request->validate([
+        'hubungan'      => 'required|string|max:50',
+        'nama'          => 'required|string|max:150',
+        'tanggal_lahir' => 'nullable|date',
+        'pekerjaan'     => 'nullable|string|max:150',
+        'no_darurat'    => 'nullable|string|max:20', // Validasi no_darurat
+    ]);
+
+    // 5. Update Data
+    $keluarga->update($request->only(
+        'hubungan',
+        'nama',
+        'tanggal_lahir',
+        'pekerjaan',
+        'no_darurat' // Pastikan no_darurat ikut di-update
+    ));
+
+    // 6. Redirect kembali
+    return redirect()->route('perawat.keluarga.index')->with('swal', [
+        'icon' => 'success',
+        'title' => 'Berhasil',
+        'text' => 'Data keluarga diperbarui.'
+    ]);
+}
 
     public function keluargaDestroy($id)
     {

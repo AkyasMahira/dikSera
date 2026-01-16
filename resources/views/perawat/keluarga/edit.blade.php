@@ -194,6 +194,13 @@
                             <label class="form-label">Pekerjaan</label>
                             <input type="text" name="pekerjaan" class="form-control" value="{{ old('pekerjaan', $keluarga->pekerjaan) }}">
                         </div>
+
+                        {{-- NEW: No Darurat --}}
+                        <div class="col-md-6">
+                            <label class="form-label">No. Telepon / Darurat</label>
+                            {{-- Perhatikan penggunaan old('...', $keluarga->no_darurat) --}}
+                            <input type="text" name="no_darurat" class="form-control" value="{{ old('no_darurat', $keluarga->no_darurat) }}" placeholder="Contoh: 081234567890">
+                        </div>
                     </div>
 
                     <div class="mt-5">
