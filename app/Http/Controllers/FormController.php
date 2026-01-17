@@ -76,10 +76,10 @@ class FormController extends Controller
         $request->validate([
             'judul' => 'required|string|max:255',
             'target_peserta' => 'required|in:semua,khusus,kfk', // Tambah 'kfk'
-            
+
             // Validasi jika pilih khusus
             'participants' => 'required_if:target_peserta,khusus|array',
-            
+
             // Validasi jika pilih kfk
             'kfk_target' => 'required_if:target_peserta,kfk|array',
         ]);
@@ -109,7 +109,7 @@ class FormController extends Controller
         $users = User::where('role', 'perawat')->get();
         $selectedParticipants = $form->participants->pluck('id')->toArray();
         $kfkOptions = $this->getKfkOptions(); // Load KFK
-        
+
         // Ambil KFK yang tersimpan (jika ada)
         $selectedKfk = $form->kfk_target ?? [];
 
@@ -142,6 +142,19 @@ class FormController extends Controller
         }
 
         return redirect()->route('admin.form.index')->with('success', 'Form berhasil diperbarui!');
+    }
+
+    public function updateStatus(Request $request, Form $form)
+    {
+        $request->validate([
+            'status' => 'required|in:draft,published,closed',
+        ]);
+
+        $form->update([
+            'status' => $request->status
+        ]);
+
+        return back()->with('success', 'Status ujian berhasil diperbarui menjadi ' . ucfirst($request->status));
     }
 
     public function destroy(Form $form)
