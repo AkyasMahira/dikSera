@@ -40,7 +40,7 @@ class AdminLisensiController extends Controller
             'lembaga'             => 'required|string|max:100',
             'bidang'              => 'required|string|max:100',
             'kfk'   => 'required|array',
-            'kfk.*' => 'in:Pra PK,Pra BK,PK 1,PK 1.5,PK 2,PK 2.5,PK 3,PK 3.5,PK 4,PK 4.5,PK 5,BK 1,BK 1.5,BK 2,BK 2.5,BK 3,BK 3.5,BK 4,BK 4.5,BK 5',
+            'kfk.*' => 'required|string|max:100',
             'tgl_mulai'           => 'required|date',
             'tgl_diselenggarakan' => 'required|date',
             'tgl_terbit'          => 'required|date',
@@ -140,7 +140,7 @@ class AdminLisensiController extends Controller
             'dokumen'             => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120',
             'bidang'              => 'required|string|max:100',
             'kfk'   => 'required|array',
-            'kfk.*' => 'in:Pra PK,Pra BK,PK 1,PK 1.5,PK 2,PK 2.5,PK 3,PK 3.5,PK 4,PK 4.5,PK 5,BK 1,BK 1.5,BK 2,BK 2.5,BK 3,BK 3.5,BK 4,BK 4.5,BK 5',
+            'kfk.*' => 'required|string|max:100',
             'tgl_mulai'           => 'required|date',
             'tgl_diselenggarakan' => 'required|date',
         ]);

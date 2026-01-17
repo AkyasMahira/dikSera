@@ -199,12 +199,13 @@ class PerawatDrhController extends Controller
         $request->validate([
             'jenjang'        => 'required|string|max:50',
             'nama_institusi' => 'required|string|max:150',
-            'akreditasi'     => 'nullable|string|max:10',
+            'akreditasi'     => 'nullable|string|max:50',
             'tempat'         => 'nullable|string|max:100',
             'tahun_lulus'    => 'nullable|string|max:10',
             'jurusan'        => 'nullable|string|max:150',
             'tahun_masuk'    => 'nullable|string|max:10',
             'dokumen'        => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
+            'nomor_ijazah'   => 'nullable|string|max:100',
         ]);
 
         $data = $request->except(['dokumen', '_token']);
@@ -240,12 +241,13 @@ class PerawatDrhController extends Controller
         $request->validate([
             'jenjang'        => 'required|string|max:50',
             'nama_institusi' => 'required|string|max:150',
-            'akreditasi'     => 'nullable|string|max:10',
+            'akreditasi'     => 'nullable|string|max:50',
             'tempat'         => 'nullable|string|max:100',
             'tahun_lulus'    => 'nullable|string|max:10',
             'jurusan'        => 'nullable|string|max:150',
             'tahun_masuk'    => 'nullable|string|max:10',
             'dokumen'        => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
+            'nomor_ijazah'   => 'nullable|string|max:100',
         ]);
 
         $data = $request->except(['dokumen', '_token', '_method']);
@@ -420,6 +422,8 @@ class PerawatDrhController extends Controller
             'tahun_selesai' => 'nullable|string|max:4',
             'keterangan'    => 'nullable|string|max:255',
             'dokumen'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
+            'pangkat' => 'nullable|string|max:50',
+            'status_kepegawaian' => 'required|string',
         ]);
 
         $data = $request->except(['dokumen', '_token']);
@@ -460,6 +464,8 @@ class PerawatDrhController extends Controller
             'tahun_selesai' => 'nullable|string|max:4',
             'keterangan'    => 'nullable|string|max:255',
             'dokumen'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:4096',
+            'pangkat' => 'nullable|string|max:50',
+            'status_kepegawaian' => 'required|string',
         ]);
 
         $data = $request->except(['dokumen', '_token', '_method']);
@@ -515,28 +521,30 @@ class PerawatDrhController extends Controller
     }
 
     public function keluargaStore(Request $request)
-    {
-        $user = $this->currentPerawat();
-        if (!$user) return redirect('/');
+{
+    $user = $this->currentPerawat();
+    if (!$user) return redirect('/');
 
-        $request->validate([
-            'hubungan'      => 'required|string|max:50',
-            'nama'          => 'required|string|max:150',
-            'tanggal_lahir' => 'nullable|date',
-            'pekerjaan'     => 'nullable|string|max:150',
-        ]);
+    $request->validate([
+        'hubungan'      => 'required|string|max:50',
+        'nama'          => 'required|string|max:150',
+        'tanggal_lahir' => 'nullable|date',
+        'pekerjaan'     => 'nullable|string|max:150',
+        'no_darurat'    => 'nullable|string|max:20', // <--- Tambahkan validasi
+    ]);
 
-        $data = $request->only('hubungan', 'nama', 'tanggal_lahir', 'pekerjaan');
-        $data['user_id'] = $user->id;
+    // Tambahkan 'no_darurat' ke request->only
+    $data = $request->only('hubungan', 'nama', 'tanggal_lahir', 'pekerjaan', 'no_darurat');
+    $data['user_id'] = $user->id;
 
-        PerawatKeluarga::create($data);
+    PerawatKeluarga::create($data);
 
-        return redirect()->route('perawat.keluarga.index')->with('swal', [
-            'icon' => 'success',
-            'title' => 'Berhasil',
-            'text' => 'Data keluarga ditambahkan.'
-        ]);
-    }
+    return redirect()->route('perawat.keluarga.index')->with('swal', [
+        'icon' => 'success',
+        'title' => 'Berhasil',
+        'text' => 'Data keluarga ditambahkan.'
+    ]);
+}
 
     public function keluargaEdit($id)
     {
@@ -547,26 +555,41 @@ class PerawatDrhController extends Controller
     }
 
     public function keluargaUpdate(Request $request, $id)
-    {
-        $user = $this->currentPerawat();
-        if (!$user) return redirect('/');
-        $keluarga = PerawatKeluarga::where('user_id', $user->id)->findOrFail($id);
+{
+    // 1. DEFINISI USER (Ini yang menyebabkan error sebelumnya jika hilang)
+    $user = $this->currentPerawat();
 
-        $request->validate([
-            'hubungan'      => 'required|string|max:50',
-            'nama'          => 'required|string|max:150',
-            'tanggal_lahir' => 'nullable|date',
-            'pekerjaan'     => 'nullable|string|max:150',
-        ]);
+    // 2. Cek jika user tidak ditemukan
+    if (!$user) return redirect('/');
 
-        $keluarga->update($request->only('hubungan', 'nama', 'tanggal_lahir', 'pekerjaan'));
+    // 3. Cari data keluarga berdasarkan ID dan User ID (security)
+    $keluarga = PerawatKeluarga::where('user_id', $user->id)->findOrFail($id);
 
-        return redirect()->route('perawat.keluarga.index')->with('swal', [
-            'icon' => 'success',
-            'title' => 'Berhasil',
-            'text' => 'Data keluarga diperbarui.'
-        ]);
-    }
+    // 4. Validasi Input
+    $request->validate([
+        'hubungan'      => 'required|string|max:50',
+        'nama'          => 'required|string|max:150',
+        'tanggal_lahir' => 'nullable|date',
+        'pekerjaan'     => 'nullable|string|max:150',
+        'no_darurat'    => 'nullable|string|max:20', // Validasi no_darurat
+    ]);
+
+    // 5. Update Data
+    $keluarga->update($request->only(
+        'hubungan',
+        'nama',
+        'tanggal_lahir',
+        'pekerjaan',
+        'no_darurat' // Pastikan no_darurat ikut di-update
+    ));
+
+    // 6. Redirect kembali
+    return redirect()->route('perawat.keluarga.index')->with('swal', [
+        'icon' => 'success',
+        'title' => 'Berhasil',
+        'text' => 'Data keluarga diperbarui.'
+    ]);
+}
 
     public function keluargaDestroy($id)
     {
@@ -971,7 +994,6 @@ class PerawatDrhController extends Controller
 
         $request->validate([
             'nama'        => 'required|string|max:100', // Validasi Baru
-            'lembaga'     => 'required|string|max:100', // Validasi Baru
             'nomor'       => 'required|string|max:100',
             'tgl_terbit'  => 'required|date',
             'tgl_expired' => 'required|date',
@@ -1005,7 +1027,6 @@ class PerawatDrhController extends Controller
 
         $request->validate([
             'nama'        => 'required|string|max:100', // Validasi Baru
-            'lembaga'     => 'required|string|max:100', // Validasi Baru
             'nomor'       => 'required|string|max:100',
             'tgl_terbit'  => 'required|date',
             'tgl_expired' => 'required|date',
@@ -1061,7 +1082,6 @@ class PerawatDrhController extends Controller
 
         $request->validate([
             'nama'        => 'required|string|max:100', // Validasi Baru
-            'lembaga'     => 'required|string|max:100', // Validasi Baru
             'nomor'       => 'required|string|max:100',
             'tgl_terbit'  => 'required|date',
             'tgl_expired' => 'required|date',
@@ -1094,7 +1114,6 @@ class PerawatDrhController extends Controller
 
         $request->validate([
             'nama'        => 'required|string|max:100', // Validasi Baru
-            'lembaga'     => 'required|string|max:100', // Validasi Baru
             'nomor'       => 'required|string|max:100',
             'tgl_terbit'  => 'required|date',
             'tgl_expired' => 'required|date',
@@ -1151,7 +1170,6 @@ class PerawatDrhController extends Controller
         $isLifetime = $request->has('is_lifetime') && $request->input('is_lifetime') == '1';
 
         $rules = [
-            'jenis'      => 'required|string|max:100',
             'nama'       => 'required|string|max:100',
             'lembaga'    => 'required|string|max:100',
             'nomor'      => 'required|string|max:100',
@@ -1215,7 +1233,6 @@ class PerawatDrhController extends Controller
         $isLifetime = $request->has('is_lifetime') && $request->input('is_lifetime') == '1';
 
         $rules = [
-            'jenis'      => 'required|string|max:100',
             'nama'       => 'required|string|max:100',
             'lembaga'    => 'required|string|max:100',
             'nomor'      => 'required|string|max:100',

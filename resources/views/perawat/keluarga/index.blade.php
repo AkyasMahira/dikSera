@@ -212,9 +212,11 @@
             <table class="custom-table">
                 <thead>
                     <tr>
-                        <th width="35%">Nama & Hubungan</th>
-                        <th width="20%">Tanggal Lahir</th>
-                        <th width="35%">Pekerjaan</th>
+                        {{-- Saya menyesuaikan lebar kolom agar muat 5 kolom --}}
+                        <th width="25%">Nama & Hubungan</th>
+                        <th width="15%">Tanggal Lahir</th>
+                        <th width="20%">Pekerjaan</th>
+                        <th width="20%">No. Darurat</th> {{-- Kolom Baru --}}
                         <th width="10%" class="text-end">Aksi</th>
                     </tr>
                 </thead>
@@ -245,6 +247,18 @@
                                 {{ $row->pekerjaan ?? '-' }}
                             </td>
 
+                            {{-- No Darurat (BARU) --}}
+                            <td>
+                                @if($row->no_darurat)
+                                    <span class="text-dark d-flex align-items-center gap-1">
+                                        <i class="bi bi-telephone text-muted" style="font-size: 0.8rem;"></i>
+                                        {{ $row->no_darurat }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+
                             {{-- Aksi --}}
                             <td class="text-end">
                                 <div class="d-flex gap-1 justify-content-end">
@@ -264,7 +278,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-5">
+                            <td colspan="5" class="text-center py-5">
                                 <div class="text-muted" style="opacity: 0.6;">
                                     <i class="bi bi-house-heart fs-1 d-block mb-2"></i>
                                     Belum ada data keluarga.

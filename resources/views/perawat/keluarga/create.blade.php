@@ -135,6 +135,18 @@
 </style>
 @endpush
 
+@extends('layouts.app')
+
+@section('title', 'Tambah Keluarga – DIKSERA')
+
+@push('styles')
+{{-- Style tetap sama seperti sebelumnya --}}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* ... (CSS Anda sebelumnya) ... */
+</style>
+@endpush
+
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -194,6 +206,12 @@
                         <div class="col-md-6">
                             <label class="form-label">Pekerjaan</label>
                             <input type="text" name="pekerjaan" class="form-control" value="{{ old('pekerjaan') }}" placeholder="Contoh: Wiraswasta / PNS">
+                        </div>
+
+                        {{-- NEW: No Darurat --}}
+                        <div class="col-md-6">
+                            <label class="form-label">No. Telepon / Darurat</label>
+                            <input type="text" name="no_darurat" class="form-control" value="{{ old('no_darurat') }}" placeholder="Contoh: 081234567890">
                         </div>
                     </div>
 

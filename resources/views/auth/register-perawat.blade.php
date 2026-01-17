@@ -441,142 +441,165 @@
         </div>
     </div>
 
-    {{-- STEP 3 – II & III: Pendidikan / Kursus / Riwayat Pekerjaan --}}
-    <div class="step-pane d-none" data-step="3">
-        <div class="step-title">II. Pendidikan &amp; Kursus · III. Riwayat Pekerjaan</div>
+   {{-- STEP 3 – II & III: Pendidikan / Kursus / Riwayat Pekerjaan --}}
+<div class="step-pane d-none" data-step="3">
+    <div class="step-title">II. Pendidikan &amp; Kursus · III. Riwayat Pekerjaan</div>
 
-        {{-- Pendidikan (II.1) --}}
-        <div class="sub-section-head">1. Pendidikan di Dalam dan Luar Negeri</div>
-        <div id="pendidikan-wrapper" class="mb-2">
-            <div class="row g-1 mb-1 pendidikan-row dynamic-row">
-                <div class="col-6 col-md-2">
-                    <input type="text" name="pendidikan_jenjang[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Tingkat">
-                </div>
-                <div class="col-6 col-md-3">
-                    <input type="text" name="pendidikan_nama[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Nama Sekolah / PT">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="text" name="pendidikan_akreditasi[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Akreditasi">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="text" name="pendidikan_tempat[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Tempat">
-                </div>
-                <div class="col-12 col-md-3 d-flex flex-column gap-1">
-                    <input type="file"
-                           name="pendidikan_file[]"
-                           class="form-control form-control-sm form-control-light"
-                           accept=".pdf,image/*"
-                           data-show-filename="true"
-                           data-show-preview="true">
-                    <small class="text-muted file-name" style="font-size:10px;">STTB/Ijazah (pdf/jpg)</small>
-                    <img class="img-preview"
-                         src="#"
-                         alt="Preview"
-                         style="max-height:60px;border-radius:6px;display:none;border:1px solid #e5e7eb;">
-                    <button type="button"
-                            class="btn btn-link text-danger p-0 align-self-start remove-row-btn"
-                            style="font-size:11px;">Hapus</button>
-                </div>
+    {{-- Pendidikan (II.1) --}}
+    <div class="sub-section-head">1. Pendidikan di Dalam dan Luar Negeri</div>
+    <div id="pendidikan-wrapper" class="mb-2">
+        <div class="row g-1 mb-1 pendidikan-row dynamic-row">
+            {{-- UBAH: Dropdown Jenjang / Tingkat --}}
+            <div class="col-6 col-md-2">
+                <select name="pendidikan_jenjang[]" class="form-select form-select-sm form-control-light">
+                    <option value="" selected disabled>Pilih Tingkat</option>
+                    <option value="SD">SD</option>
+                    <option value="SMP">SMP</option>
+                    <option value="SMA/SMK">SMA/SMK</option>
+                    <option value="D1">D1</option>
+                    <option value="D2">D2</option>
+                    <option value="D3">D3</option>
+                    <option value="D4">D4</option>
+                    <option value="S1">S1</option>
+                    <option value="S2">S2</option>
+                    <option value="S3">S3</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <input type="text" name="pendidikan_nama[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Nama Sekolah / PT">
+            </div>
+
+            {{-- UBAH: Dropdown Akreditasi --}}
+            <div class="col-6 col-md-2">
+                <select name="pendidikan_akreditasi[]" class="form-select form-select-sm form-control-light">
+                    <option value="" selected disabled>Akreditasi</option>
+                    <option value="Unggul">Unggul</option>
+                    <option value="A">A</option>
+                    <option value="Baik Sekali">Baik Sekali</option>
+                    <option value="B">B</option>
+                    <option value="Baik">Baik</option>
+                    <option value="C">C</option>
+                    <option value="Tidak Terakreditasi">Tidak Terakreditasi</option>
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <input type="text" name="pendidikan_tempat[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Tempat">
+            </div>
+
+            <div class="col-12 col-md-3 d-flex flex-column gap-1">
+                <input type="file"
+                       name="pendidikan_file[]"
+                       class="form-control form-control-sm form-control-light"
+                       accept=".pdf,image/*"
+                       data-show-filename="true"
+                       data-show-preview="true">
+                <small class="text-muted file-name" style="font-size:10px;">STTB/Ijazah (pdf/jpg)</small>
+                <img class="img-preview"
+                     src="#"
+                     alt="Preview"
+                     style="max-height:60px;border-radius:6px;display:none;border:1px solid #e5e7eb;">
+                <button type="button"
+                        class="btn btn-link text-danger p-0 align-self-start remove-row-btn"
+                        style="font-size:11px;">Hapus</button>
             </div>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="add-pendidikan">+ Tambah Pendidikan</button>
-
-        {{-- Kursus / Latihan (II.2) --}}
-        <div class="sub-section-head mt-2">2. Kursus / Latihan di Dalam dan Luar Negeri</div>
-        <div id="pelatihan-wrapper" class="mb-2">
-            <div class="row g-1 mb-1 pelatihan-row dynamic-row">
-                <div class="col-12 col-md-3">
-                    <input type="text" name="pelatihan_nama[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Nama Kursus / Latihan">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="text" name="pelatihan_durasi[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Lamanya">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="date" name="pelatihan_mulai[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Tgl Mulai">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="date" name="pelatihan_selesai[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Tgl Selesai">
-                </div>
-                <div class="col-6 col-md-3 d-flex flex-column gap-1">
-                    <input type="file"
-                           name="pelatihan_file[]"
-                           class="form-control form-control-sm form-control-light"
-                           accept=".pdf,image/*"
-                           data-show-filename="true"
-                           data-show-preview="true">
-                    <small class="text-muted file-name" style="font-size:10px;">Sertifikat (pdf/jpg)</small>
-                    <img class="img-preview"
-                         src="#"
-                         alt="Preview"
-                         style="max-height:60px;border-radius:6px;display:none;border:1px solid #e5e7eb;">
-                    <button type="button"
-                            class="btn btn-link text-danger p-0 align-self-start remove-row-btn"
-                            style="font-size:11px;">Hapus</button>
-                </div>
-            </div>
-        </div>
-        <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="add-pelatihan">+ Tambah Kursus / Pelatihan</button>
-
-        {{-- Riwayat Pekerjaan (III) --}}
-        <div class="sub-section-head mt-2">III. Riwayat Pekerjaan</div>
-        <div id="pekerjaan-wrapper" class="mb-2">
-            <div class="row g-1 mb-1 pekerjaan-row dynamic-row">
-                <div class="col-12 col-md-3">
-                    <input type="text" name="pekerjaan_instansi[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Instansi / Perusahaan">
-                </div>
-                <div class="col-12 col-md-3">
-                    <input type="text" name="pekerjaan_jabatan[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Jabatan">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="date" name="pekerjaan_mulai[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Mulai">
-                </div>
-                <div class="col-6 col-md-2">
-                    <input type="date" name="pekerjaan_selesai[]"
-                           class="form-control form-control-sm form-control-light"
-                           placeholder="Selesai">
-                </div>
-                <div class="col-12 col-md-2 d-flex flex-column gap-1">
-                    <input type="file"
-                           name="pekerjaan_file[]"
-                           class="form-control form-control-sm form-control-light"
-                           accept=".pdf,image/*"
-                           data-show-filename="true"
-                           data-show-preview="true">
-                    <small class="text-muted file-name" style="font-size:10px;">SK Pengangkatan</small>
-                    <img class="img-preview"
-                         src="#"
-                         alt="Preview"
-                         style="max-height:60px;border-radius:6px;display:none;border:1px solid #e5e7eb;">
-                    <button type="button"
-                            class="btn btn-link text-danger p-0 align-self-start remove-row-btn"
-                            style="font-size:11px;">Hapus</button>
-                </div>
-            </div>
-        </div>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="add-pekerjaan">+ Tambah Riwayat Pekerjaan</button>
     </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="add-pendidikan">+ Tambah Pendidikan</button>
+
+    {{-- Kursus / Latihan (II.2) --}}
+    <div class="sub-section-head mt-2">2. Kursus / Latihan di Dalam dan Luar Negeri</div>
+    <div id="pelatihan-wrapper" class="mb-2">
+        <div class="row g-1 mb-1 pelatihan-row dynamic-row">
+            <div class="col-12 col-md-3">
+                <input type="text" name="pelatihan_nama[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Nama Kursus / Latihan">
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="text" name="pelatihan_durasi[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Lamanya">
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="date" name="pelatihan_mulai[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Tgl Mulai">
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="date" name="pelatihan_selesai[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Tgl Selesai">
+            </div>
+            <div class="col-6 col-md-3 d-flex flex-column gap-1">
+                <input type="file"
+                       name="pelatihan_file[]"
+                       class="form-control form-control-sm form-control-light"
+                       accept=".pdf,image/*"
+                       data-show-filename="true"
+                       data-show-preview="true">
+                <small class="text-muted file-name" style="font-size:10px;">Sertifikat (pdf/jpg)</small>
+                <img class="img-preview"
+                     src="#"
+                     alt="Preview"
+                     style="max-height:60px;border-radius:6px;display:none;border:1px solid #e5e7eb;">
+                <button type="button"
+                        class="btn btn-link text-danger p-0 align-self-start remove-row-btn"
+                        style="font-size:11px;">Hapus</button>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="add-pelatihan">+ Tambah Kursus / Pelatihan</button>
+
+    {{-- Riwayat Pekerjaan (III) --}}
+    <div class="sub-section-head mt-2">III. Riwayat Pekerjaan</div>
+    <div id="pekerjaan-wrapper" class="mb-2">
+        <div class="row g-1 mb-1 pekerjaan-row dynamic-row">
+            <div class="col-12 col-md-3">
+                <input type="text" name="pekerjaan_instansi[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Instansi / Perusahaan">
+            </div>
+            <div class="col-12 col-md-3">
+                <input type="text" name="pekerjaan_jabatan[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Jabatan">
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="date" name="pekerjaan_mulai[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Mulai">
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="date" name="pekerjaan_selesai[]"
+                       class="form-control form-control-sm form-control-light"
+                       placeholder="Selesai">
+            </div>
+            <div class="col-12 col-md-2 d-flex flex-column gap-1">
+                <input type="file"
+                       name="pekerjaan_file[]"
+                       class="form-control form-control-sm form-control-light"
+                       accept=".pdf,image/*"
+                       data-show-filename="true"
+                       data-show-preview="true">
+                <small class="text-muted file-name" style="font-size:10px;">SK Pengangkatan</small>
+                <img class="img-preview"
+                     src="#"
+                     alt="Preview"
+                     style="max-height:60px;border-radius:6px;display:none;border:1px solid #e5e7eb;">
+                <button type="button"
+                        class="btn btn-link text-danger p-0 align-self-start remove-row-btn"
+                        style="font-size:11px;">Hapus</button>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary" id="add-pekerjaan">+ Tambah Riwayat Pekerjaan</button>
+</div>
 
     {{-- STEP 4 – IV Tanda Jasa, V Keluarga, VI Organisasi --}}
     <div class="step-pane d-none" data-step="4">
