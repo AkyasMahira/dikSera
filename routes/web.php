@@ -98,9 +98,11 @@ Route::middleware(['auth'])->group(function () {
         // [FIXED] DESTROY WAJIB DELETE
         Route::delete('/pengajuan/{id}', [AdminPengajuanController::class, 'destroy'])->name('pengajuan.destroy');
 
+        Route::get('/pengajuan/export-jadwal', [AdminPengajuanController::class, 'exportJadwal'])->name('pengajuan.export_jadwal');
+
         // PENGAJUAN WAWANCARA
         Route::prefix('pengajuan-wawancara')->name('pengajuan_wawancara.')->group(function () {
-            Route::get('/{id}/approve', [AdminPengajuanWawancaraController::class, 'approveJadwal'])->name('approve');
+            Route::post('/{id}/approve', [AdminPengajuanWawancaraController::class, 'approveJadwal'])->name('approve');
             Route::post('/{id}/reject', [AdminPengajuanWawancaraController::class, 'rejectJadwal'])->name('reject');
             Route::get('/{id}/penilaian', [AdminPengajuanWawancaraController::class, 'showPenilaian'])->name('penilaian');
             Route::post('/{id}/penilaian', [AdminPengajuanWawancaraController::class, 'storePenilaian'])->name('store_penilaian');

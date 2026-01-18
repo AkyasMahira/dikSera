@@ -299,8 +299,14 @@
                 <h1 class="page-title">Approval Pengajuan</h1>
                 <p class="page-subtitle">Manajemen validasi lisensi baru dan perpanjangan.</p>
             </div>
-            <div class="d-none d-md-flex gap-3">
-                <div class="px-3 py-1 bg-white border rounded-3 d-flex align-items-center gap-2 shadow-sm">
+            <div class="d-flex gap-2">
+                {{-- [BARU] TOMBOL EXPORT JADWAL --}}
+                <a href="{{ route('admin.pengajuan.export_jadwal') }}"
+                    class="btn btn-success btn-sm d-flex align-items-center gap-2 shadow-sm" target="_blank">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i> Export Jadwal
+                </a>
+
+                <div class="d-none d-md-flex px-3 py-1 bg-white border rounded-3 align-items-center gap-2 shadow-sm">
                     <i class="bi bi-hourglass-split text-warning"></i>
                     <span class="small fw-bold">{{ $pengajuan->where('status', 'pending')->count() }} Pending</span>
                 </div>
@@ -311,6 +317,13 @@
             <div
                 class="alert alert-success border-0 bg-success bg-opacity-10 text-success mb-4 rounded-3 d-flex align-items-center gap-2">
                 <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div
+                class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger mb-4 rounded-3 d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-circle-fill"></i> {{ session('error') }}
             </div>
         @endif
 
@@ -362,7 +375,7 @@
                 </div>
             </form>
         </div>
-        
+
         {{-- TABLE SECTION --}}
         <div class="table-card">
             <div class="table-responsive">
@@ -375,7 +388,7 @@
                             <th>Perawat</th>
                             <th>Sertifikat</th>
                             <th>Status</th>
-                            <th>Metode/Tipe</th> {{-- Diupdate labelnya --}}
+                            <th>Metode/Tipe</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -383,7 +396,6 @@
                         @forelse($pengajuan as $item)
                             <tr>
                                 <td class="text-center">
-                                    {{-- Checkbox hanya aktif untuk status yang bisa di-bulk --}}
                                     @if (in_array($item->status, ['pending', 'method_selected', 'interview_scheduled']))
                                         <input type="checkbox" name="ids[]" value="{{ $item->id }}"
                                             class="form-check-input check-item" style="cursor: pointer;">
@@ -412,7 +424,6 @@
 
                                 {{-- Kolom Nama Sertifikat --}}
                                 <td>
-                                    {{-- Tampilkan nama lisensi lama, atau jika baru ambil dari relasi --}}
                                     <span class="text-dark fw-medium">{{ $item->lisensiLama->nama ?? '-' }}</span>
                                 </td>
 
@@ -429,7 +440,7 @@
                                             {{ $item->metode == 'interview_only' ? 'Siap Wawancara' : 'Lulus Ujian' }}
                                         </span>
                                     @elseif($item->status == 'interview_scheduled')
-                                        <span class="status-badge st-info"><i class="bi bi-calendar-event"></i>
+                                        <span class="status-badge st-warning"><i class="bi bi-calendar-event"></i>
                                             Wawancara</span>
                                     @elseif($item->status == 'completed')
                                         <span class="status-badge st-success"><i class="bi bi-check-all"></i> Selesai</span>
@@ -438,18 +449,19 @@
                                     @endif
                                 </td>
 
-                                {{-- Kolom Metode (UPDATED UNTUK NEW SUBMISSION) --}}
+                                {{-- Kolom Metode --}}
                                 <td>
                                     <span class="text-muted small">
                                         @if ($item->metode == 'new_submission')
-                                            {{-- Badge khusus Lisensi Baru --}}
-                                            <span class="badge bg-info text-dark border border-info" style="font-size: 10px;">
+                                            <span class="badge bg-info text-dark border border-info"
+                                                style="font-size: 10px;">
                                                 <i class="bi bi-star-fill me-1"></i> Lisensi Baru
                                             </span>
                                         @elseif ($item->metode == 'pg_only')
                                             Perpanjangan (PG)
                                         @elseif($item->metode == 'interview_only')
-                                            <span class="status-badge st-purple" style="font-size: 10px;">Perpanjangan (Wawancara)</span>
+                                            <span class="status-badge st-purple" style="font-size: 10px;">Perpanjangan
+                                                (Wawancara)</span>
                                         @elseif($item->metode == 'pg_interview')
                                             Perpanjangan (PG + Wawancara)
                                         @else
@@ -463,7 +475,6 @@
                                     <div class="d-flex justify-content-center gap-1">
 
                                         {{-- 1. AKSI APPROVAL AWAL (Status: pending) --}}
-                                        {{-- Berlaku untuk Lisensi Baru maupun Perpanjangan --}}
                                         @if ($item->status == 'pending')
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail"><i class="bi bi-eye"></i></a>
@@ -472,23 +483,22 @@
                                                 method="POST">
                                                 @csrf
                                                 <button class="btn-icon btn-act-check"
-                                                    onclick="return confirm('{{ $item->metode == 'new_submission' ? 'Setujui dan Aktifkan Lisensi Baru?' : 'Setujui Pengajuan Perpanjangan?' }}')" 
+                                                    onclick="return confirm('{{ $item->metode == 'new_submission' ? 'Setujui dan Aktifkan Lisensi Baru?' : 'Setujui Pengajuan Perpanjangan?' }}')"
                                                     title="Setujui">
                                                     <i class="bi bi-check-lg"></i>
                                                 </button>
                                             </form>
-                                            
-                                            {{-- Tombol Reject (Opsional, jika ada route reject) --}}
-                                            <form action="{{ route('admin.pengajuan.reject', $item->id) }}" method="POST" class="d-inline">
+
+                                            <form action="{{ route('admin.pengajuan.reject', $item->id) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn-icon btn-act-x" 
+                                                <button type="submit" class="btn-icon btn-act-x"
                                                     onclick="return confirm('Tolak pengajuan ini?')" title="Tolak">
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
                                             </form>
 
-
-                                        {{-- 2. AKSI APPROVE NILAI UJIAN --}}
+                                            {{-- 2. AKSI APPROVE NILAI UJIAN --}}
                                         @elseif ($item->status == 'method_selected' && $item->user->examResult && $item->metode != 'interview_only')
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail"><i class="bi bi-eye"></i></a>
@@ -499,31 +509,135 @@
                                                 <i class="bi bi-check-all"></i>
                                             </a>
 
-                                        {{-- 3. AKSI JADWAL WAWANCARA --}}
+                                            {{-- 3. AKSI JADWAL WAWANCARA (MODIFIKASI: MODAL EDIT + PILIH PEWAWANCARA) --}}
                                         @elseif ($item->status == 'interview_scheduled' && $item->jadwalWawancara)
                                             @php $jadwal = $item->jadwalWawancara; @endphp
 
                                             @if ($jadwal->status == 'pending')
                                                 <a href="{{ route('admin.pengajuan.show', $item->id) }}"
-                                                    class="btn-icon btn-view" title="Detail"><i class="bi bi-eye"></i></a>
+                                                    class="btn-icon btn-view" title="Detail"><i
+                                                        class="bi bi-eye"></i></a>
 
-                                                <a href="{{ route('admin.pengajuan_wawancara.approve', $jadwal->id) }}"
-                                                    class="btn-icon btn-act-check"
-                                                    onclick="return confirm('Setujui Jadwal? Data akan dikirim ke Pewawancara.')"
-                                                    title="Acc Jadwal">
-                                                    <i class="bi bi-calendar-check"></i>
-                                                </a>
-                                                
+                                                {{-- TOMBOL MODAL EDIT & ACC JADWAL --}}
+                                                <button type="button" class="btn-icon btn-act-check"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalApproveJadwal{{ $item->id }}"
+                                                    title="Verifikasi & Edit Jadwal">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+
+                                                {{-- Tombol Reject --}}
                                                 <button type="button" class="btn-icon btn-act-x" data-bs-toggle="modal"
-                                                    data-bs-target="#rejectModal{{ $jadwal->id }}" title="Tolak Jadwal">
+                                                    data-bs-target="#rejectModal{{ $jadwal->id }}"
+                                                    title="Tolak Jadwal">
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
+
+                                                {{-- MODAL FORM APPROVE & EDIT JADWAL --}}
+                                                <div class="modal fade text-start"
+                                                    id="modalApproveJadwal{{ $item->id }}" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <form
+                                                                action="{{ route('admin.pengajuan_wawancara.approve', $item->id) }}"
+                                                                method="POST">
+                                                                @csrf
+
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title fw-bold">Verifikasi & Edit
+                                                                        Jadwal</h5>
+                                                                    <button type="button" class="btn-close"
+                                                                        data-bs-dismiss="modal"></button>
+                                                                </div>
+
+                                                                <div class="modal-body">
+                                                                    @php
+                                                                        $tgl = \Carbon\Carbon::parse(
+                                                                            $jadwal->waktu_wawancara,
+                                                                        );
+                                                                    @endphp
+
+                                                                    <div class="alert alert-info small mb-3">
+                                                                        <i class="bi bi-pencil-fill me-1"></i>
+                                                                        Anda dapat mengganti <strong>Pewawancara</strong>,
+                                                                        Waktu, dan Lokasi di bawah ini.
+                                                                    </div>
+
+                                                                    {{-- [BARU] PILIH PEWAWANCARA --}}
+                                                                    <div class="mb-3">
+                                                                        <label class="small fw-bold mb-1">Pewawancara /
+                                                                            Penguji</label>
+                                                                        <select name="penanggung_jawab_id"
+                                                                            class="form-select">
+                                                                            @foreach ($pjs as $pj)
+                                                                                <option value="{{ $pj->id }}"
+                                                                                    {{ $jadwal->penanggung_jawab_id == $pj->id ? 'selected' : '' }}>
+                                                                                    {{ $pj->nama }}
+                                                                                </option>
+                                                                            @endforeach
+                                                                        </select>
+                                                                    </div>
+
+                                                                    {{-- Input Tanggal & Jam --}}
+                                                                    <div class="row g-2 mb-3">
+                                                                        <div class="col-md-6">
+                                                                            <label
+                                                                                class="small fw-bold mb-1">Tanggal</label>
+                                                                            <input type="date" name="tgl_wawancara"
+                                                                                class="form-control"
+                                                                                value="{{ $tgl->format('Y-m-d') }}"
+                                                                                required>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <label class="small fw-bold mb-1">Jam</label>
+                                                                            <input type="time" name="jam_wawancara"
+                                                                                class="form-control"
+                                                                                value="{{ $tgl->format('H:i') }}"
+                                                                                required>
+                                                                        </div>
+                                                                        <div class="col-12">
+                                                                            <label
+                                                                                class="small fw-bold mb-1">Lokasi</label>
+                                                                            <input type="text" name="lokasi"
+                                                                                class="form-control"
+                                                                                value="{{ $jadwal->lokasi }}" required>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {{-- Input Deskripsi Skill --}}
+                                                                    <div class="mb-2">
+                                                                        <label class="small fw-bold text-primary mb-1">
+                                                                            <i class="bi bi-list-check"></i> Deskripsi
+                                                                            Skill / Topik
+                                                                        </label>
+                                                                        <textarea name="deskripsi_skill" class="form-control" rows="3"
+                                                                            placeholder="Contoh: Fokus pada SOP Pemasangan Infus, Komunikasi Efektif...">{{ $jadwal->deskripsi_skill }}</textarea>
+                                                                        <div class="form-text small">Informasi ini akan
+                                                                            tampil di dashboard perawat.
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-light"
+                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit"
+                                                                        class="btn btn-success text-white fw-bold">
+                                                                        <i class="bi bi-check-lg"></i> Simpan & Setujui
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
                                                 {{-- Modal Reject Inline --}}
                                                 <div class="modal fade text-start" id="rejectModal{{ $jadwal->id }}"
                                                     tabindex="-1">
                                                     <div class="modal-dialog modal-sm modal-dialog-centered">
-                                                        <form action="{{ route('admin.pengajuan_wawancara.reject', $jadwal->id) }}" method="POST">
+                                                        <form
+                                                            action="{{ route('admin.pengajuan_wawancara.reject', $item->id) }}"
+                                                            method="POST">
                                                             @csrf
                                                             <div class="modal-content">
                                                                 <div class="modal-header py-2 border-0">
@@ -533,27 +647,28 @@
                                                                     <textarea name="alasan" class="form-control form-control-sm" rows="3" required placeholder="Alasan..."></textarea>
                                                                 </div>
                                                                 <div class="modal-footer border-0 pt-2">
-                                                                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Batal</button>
-                                                                    <button type="submit" class="btn btn-sm btn-danger">Kirim</button>
+                                                                    <button type="button" class="btn btn-sm btn-light"
+                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit"
+                                                                        class="btn btn-sm btn-danger">Kirim</button>
                                                                 </div>
                                                             </div>
                                                         </form>
                                                     </div>
                                                 </div>
-
                                             @elseif($jadwal->status == 'approved')
                                                 <button type="button" class="btn-icon btn-act-copy"
                                                     onclick="copyLink('{{ route('pewawancara.penilaian', $jadwal->id) }}')"
-                                                    data-bs-toggle="tooltip"
-                                                    title="Salin Link Penilaian">
+                                                    data-bs-toggle="tooltip" title="Salin Link Penilaian">
                                                     <i class="bi bi-link-45deg"></i>
                                                 </button>
-                                                <button class="btn-icon text-secondary" disabled style="cursor: help; opacity: 0.6;" title="Menunggu Pewawancara">
+                                                <button class="btn-icon text-secondary" disabled
+                                                    style="cursor: help; opacity: 0.6;" title="Menunggu Pewawancara">
                                                     <i class="bi bi-hourglass-split"></i>
                                                 </button>
                                             @endif
 
-                                        {{-- 4. JIKA SELESAI --}}
+                                            {{-- 4. JIKA SELESAI --}}
                                         @elseif($item->status == 'completed')
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-act-blue" title="Lihat Hasil">
@@ -563,12 +678,13 @@
                                                 method="POST" class="d-inline">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn-icon btn-act-x"
-                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')" title="Hapus Data">
+                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')"
+                                                    title="Hapus Data">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
 
-                                        {{-- 5. JIKA DITOLAK --}}
+                                            {{-- 5. JIKA DITOLAK --}}
                                         @elseif($item->status == 'rejected')
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail">
@@ -578,11 +694,11 @@
                                                 method="POST" class="d-inline">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn-icon btn-act-x"
-                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')" title="Hapus Data">
+                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')"
+                                                    title="Hapus Data">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
-
                                         @else
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail">

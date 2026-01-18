@@ -377,7 +377,7 @@
                                 </div>
                             </div>
 
-                            {{-- STATUS BADGES (LOGIKA PERBAIKAN) --}}
+                            {{-- STATUS BADGES --}}
                             <div>
                                 @if ($item->status == 'pending')
                                     <span class="status-badge badge-pending"><i class="bi bi-hourglass-split"></i> Menunggu
@@ -394,9 +394,7 @@
                                     <span class="status-badge badge-warning"><i class="bi bi-calendar-event"></i> Jadwal
                                         Wawancara</span>
                                 @elseif($item->status == 'completed')
-                                    {{-- Cek jika ini Lisensi Baru (metode null) --}}
                                     @if (is_null($item->metode))
-                                        {{-- GANTI TEKS AGAR TIDAK BINGUNG --}}
                                         <span class="status-badge badge-success"><i class="bi bi-check-circle-fill"></i>
                                             Penerbitan Selesai</span>
                                     @else
@@ -415,7 +413,7 @@
 
                         <div class="card-body-custom">
 
-                            {{-- INFO METODE (Hanya muncul jika bukan lisensi baru yang sudah selesai) --}}
+                            {{-- INFO METODE --}}
                             @if (!is_null($item->metode) && !in_array($item->status, ['pending', 'rejected']))
                                 <div class="alert-modern blue">
                                     <i class="bi bi-info-circle-fill fs-5"></i>
@@ -423,28 +421,27 @@
                                         <span class="fw-bold d-block">Metode Evaluasi:</span>
                                         <span>
                                             @if ($item->metode == 'pg_only')
-                                                Hanya Ujian Tulis (Pilihan Ganda)
+                                                Hanya Ujian Tulis
                                             @elseif($item->metode == 'interview_only')
-                                                Hanya Wawancara Tatap Muka
+                                                Hanya Wawancara
                                             @else
-                                                Ujian Tulis (PG) + Wawancara Tatap Muka
+                                                Ujian Tulis + Wawancara
                                             @endif
                                         </span>
                                     </div>
                                 </div>
                             @endif
 
-                            {{-- INFO UNTUK LISENSI BARU --}}
+                            {{-- INFO LISENSI BARU --}}
                             @if (is_null($item->metode) && $item->status == 'pending')
                                 <div class="alert-modern blue">
                                     <i class="bi bi-info-circle-fill fs-5"></i>
                                     <div>
                                         <span class="fw-bold d-block">Pengajuan Lisensi Baru</span>
-                                        <span>Dokumen Anda sedang diperiksa oleh Admin. Mohon menunggu persetujuan.</span>
+                                        <span>Dokumen Anda sedang diperiksa oleh Admin.</span>
                                     </div>
                                 </div>
                             @endif
-
 
                             {{-- INSTRUKSI UJIAN --}}
                             @if ($item->status == 'method_selected')
@@ -452,8 +449,7 @@
                                     <i class="bi bi-exclamation-triangle-fill fs-5"></i>
                                     <div>
                                         <strong class="d-block mb-1">Tindakan Diperlukan:</strong>
-                                        Silakan akses menu <strong>Ujian & Evaluasi</strong> untuk mengerjakan soal ujian
-                                        tulis agar proses bisa berlanjut.
+                                        Silakan akses menu <strong>Ujian & Evaluasi</strong> untuk mengerjakan soal ujian.
                                     </div>
                                 </div>
                             @endif
@@ -465,6 +461,7 @@
                                     <span class="section-label"><i class="bi bi-calendar-plus me-1"></i> Ajukan Jadwal
                                         Wawancara</span>
 
+                                    {{-- Alert jika ditolak --}}
                                     @php $lastJadwal = $item->jadwalWawancara; @endphp
                                     @if ($lastJadwal && $lastJadwal->status == 'rejected')
                                         <div class="alert-modern red mb-4">
@@ -476,20 +473,17 @@
                                         </div>
                                     @endif
 
+                                    {{-- Alert jika Gagal Wawancara --}}
                                     @if ($item->status == 'interview_failed' && $lastJadwal && $lastJadwal->penilaian)
                                         <div class="alert-modern red mb-4">
                                             <i class="bi bi-x-octagon-fill fs-5"></i>
                                             <div>
-                                                <strong>Hasil Wawancara:</strong>
-                                                <p class="mb-0 mt-1">Keputusan:
-                                                    <strong>{{ ucfirst(str_replace('_', ' ', $lastJadwal->penilaian->keputusan)) }}</strong>
-                                                </p>
+                                                <strong>Hasil Wawancara: Gagal</strong>
                                                 @if (!empty($lastJadwal->penilaian->catatan_pewawancara))
                                                     <p class="mb-0 mt-1">Catatan:
                                                         "{{ $lastJadwal->penilaian->catatan_pewawancara }}"</p>
                                                 @endif
-                                                <p class="mb-0 mt-2">Silakan ajukan ulang jadwal wawancara melalui form di
-                                                    bawah.</p>
+                                                <p class="mb-0 mt-2">Silakan ajukan ulang jadwal.</p>
                                             </div>
                                         </div>
                                     @endif
@@ -533,66 +527,120 @@
                             {{-- READ ONLY: STATUS JADWAL --}}
                             @if ($item->status == 'interview_scheduled' && $item->jadwalWawancara)
                                 @php $jadwal = $item->jadwalWawancara; @endphp
-                                <div class="action-container bg-white border border-secondary border-opacity-25">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <span class="section-label mb-0 text-dark">Detail Jadwal Wawancara</span>
-                                        @if ($jadwal->status == 'approved')
-                                            <span class="badge bg-success text-white rounded-pill px-3">Disetujui</span>
-                                        @else
+
+                                {{-- JADWAL PENDING (Menunggu Admin) --}}
+                                @if ($jadwal->status == 'pending')
+                                    <div class="action-container bg-white border border-secondary border-opacity-25">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="section-label mb-0 text-dark">Detail Jadwal Wawancara</span>
                                             <span class="badge bg-warning text-dark rounded-pill px-3">Menunggu
                                                 Konfirmasi</span>
-                                        @endif
+                                        </div>
+                                        <div class="row g-4 mt-1">
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block mb-1">Pewawancara</small>
+                                                <div class="fw-semibold text-dark">{{ $jadwal->pewawancara->nama ?? '-' }}
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block mb-1">Waktu</small>
+                                                <div class="fw-semibold text-dark">
+                                                    {{ $jadwal->waktu_wawancara->format('d M Y, H:i') }} WIB</div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block mb-1">Lokasi</small>
+                                                <div class="fw-semibold text-dark">{{ $jadwal->lokasi }}</div>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div class="row g-4 mt-1">
-                                        <div class="col-sm-4">
-                                            <small class="text-muted d-block mb-1">Pewawancara</small>
-                                            <div class="fw-semibold text-dark">{{ $jadwal->pewawancara->nama ?? '-' }}
-                                            </div>
+                                    {{-- JADWAL APPROVED (Sudah di-acc Admin) --}}
+                                @elseif ($jadwal->status == 'approved')
+                                    <div
+                                        class="action-container bg-white border border-success border-opacity-25 shadow-sm">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="section-label mb-0 text-dark fw-bold">
+                                                <i class="bi bi-calendar-check-fill text-success me-2"></i> Jadwal
+                                                Terkonfirmasi
+                                            </span>
+                                            <span class="badge bg-success text-white rounded-pill px-3">Disetujui
+                                                Admin</span>
                                         </div>
-                                        <div class="col-sm-4">
-                                            <small class="text-muted d-block mb-1">Waktu Pelaksanaan</small>
-                                            <div class="fw-semibold text-dark">
-                                                <i class="bi bi-clock me-1 text-primary"></i>
-                                                {{ $jadwal->waktu_wawancara->format('d M Y, H:i') }} WIB
-                                            </div>
+
+                                        {{-- Alert Info Perubahan --}}
+                                        <div class="alert alert-success d-flex align-items-center py-2 px-3 small mb-3">
+                                            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                            <div>Silakan hadir sesuai waktu dan lokasi yang tercantum di bawah ini.</div>
                                         </div>
-                                        <div class="col-sm-4">
-                                            <small class="text-muted d-block mb-1">Lokasi</small>
-                                            <div class="fw-semibold text-dark">{{ $jadwal->lokasi }}</div>
+
+                                        <div class="row g-4">
+                                            {{-- Pewawancara --}}
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block mb-1 text-uppercase"
+                                                    style="font-size: 0.7rem;">Pewawancara</small>
+                                                <div class="fw-bold text-dark">{{ $jadwal->pewawancara->nama ?? '-' }}
+                                                </div>
+                                            </div>
+
+                                            {{-- Waktu --}}
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block mb-1 text-uppercase"
+                                                    style="font-size: 0.7rem;">Waktu Pelaksanaan</small>
+                                                <div class="fw-bold text-dark">
+                                                    <span
+                                                        class="text-primary">{{ $jadwal->waktu_wawancara->format('d M Y') }}</span>
+                                                    <span class="mx-1">•</span>
+                                                    {{ $jadwal->waktu_wawancara->format('H:i') }} WIB
+                                                </div>
+                                            </div>
+
+                                            {{-- Lokasi --}}
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block mb-1 text-uppercase"
+                                                    style="font-size: 0.7rem;">Lokasi</small>
+                                                <div class="fw-bold text-dark">{{ $jadwal->lokasi }}</div>
+                                            </div>
+
+                                            {{-- DESKRIPSI SKILL (FITUR BARU) --}}
+                                            @if (!empty($jadwal->deskripsi_skill))
+                                                <div class="col-12">
+                                                    <div
+                                                        class="p-3 bg-light rounded border border-secondary border-opacity-10 mt-2">
+                                                        <small class="text-primary fw-bold text-uppercase mb-2 d-block">
+                                                            <i class="bi bi-card-checklist me-1"></i> Materi / Fokus
+                                                            Wawancara
+                                                        </small>
+                                                        <p class="mb-0 text-dark"
+                                                            style="font-size: 0.95rem; line-height: 1.5;">
+                                                            {!! nl2br(e($jadwal->deskripsi_skill)) !!}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
-                                </div>
+                                @endif
                             @endif
 
                             {{-- SELESAI --}}
                             @if ($item->status == 'completed')
                                 <div class="certificate-box mt-3">
-                                    <div class="certificate-icon">
-                                        <i class="bi bi-trophy-fill"></i>
-                                    </div>
+                                    <div class="certificate-icon"><i class="bi bi-trophy-fill"></i></div>
 
-                                    {{-- JUDUL & TEXT SESUAI JENIS LISENSI --}}
                                     @if (is_null($item->metode))
-                                        {{-- JIKA LISENSI BARU (HISTORY) --}}
                                         <h4 class="fw-bold text-success mb-2">Lisensi Baru Diterbitkan</h4>
                                         <p class="text-secondary mb-4 col-md-8 mx-auto" style="font-size: 0.95rem;">
-                                            Pengajuan penerbitan lisensi baru Anda telah selesai. Dokumen dapat dilihat pada
-                                            menu Daftar Lisensi.
+                                            Pengajuan penerbitan lisensi baru Anda telah selesai.
                                         </p>
                                         <a href="{{ route('perawat.lisensi.index') }}"
                                             class="btn btn-outline-success fw-bold px-4 py-2">
                                             <i class="bi bi-arrow-right-circle me-2"></i> Cek Daftar Lisensi
                                         </a>
                                     @else
-                                        {{-- JIKA PERPANJANGAN (ADA SERTIFIKAT KOMPETENSI) --}}
                                         <h4 class="fw-bold text-success mb-2">Selamat! Lisensi Diperbarui</h4>
                                         <p class="text-secondary mb-4 col-md-8 mx-auto" style="font-size: 0.95rem;">
-                                            Proses evaluasi telah selesai dan lisensi Anda telah aktif kembali. Silakan
-                                            unduh
-                                            bukti kelulusan digital Anda di bawah ini.
+                                            Proses evaluasi telah selesai dan lisensi Anda telah aktif kembali.
                                         </p>
-
                                         <a href="{{ route('perawat.pengajuan.sertifikat', $item->id) }}"
                                             class="btn btn-success fw-bold px-4 py-2 shadow-sm" target="_blank">
                                             <i class="bi bi-file-earmark-pdf-fill me-2"></i>

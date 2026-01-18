@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JadwalWawancara;
+use App\Models\PenanggungJawabUjian;
 use Illuminate\Http\Request;
 use App\Models\PengajuanSertifikat;
 use App\Models\PerawatLisensi;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminPengajuanController extends Controller
 {
     public function index(Request $request)
     {
         $listSertifikat = PerawatLisensi::select('nama')->distinct()->pluck('nama');
+
+        $pjs = PenanggungJawabUjian::all();
 
         $query = PengajuanSertifikat::with(['user', 'lisensiLama', 'jadwalWawancara', 'user.examResult']);
 
@@ -41,7 +46,7 @@ class AdminPengajuanController extends Controller
         }
         $pengajuan = $query->latest()->paginate(10);
 
-        return view('admin.pengajuan.index', compact('pengajuan', 'listSertifikat'));
+        return view('admin.pengajuan.index', compact('pengajuan', 'listSertifikat', 'pjs'));
     }
 
     public function approve(Request $request, $id)
@@ -342,5 +347,61 @@ class AdminPengajuanController extends Controller
         $count = PengajuanSertifikat::whereIn('id', $ids)->delete();
 
         return back()->with('success', "Berhasil menghapus $count data pengajuan secara permanen.");
+    }
+
+    public function exportJadwal()
+    {
+        // Ambil jadwal yang statusnya sudah disetujui atau selesai
+        $data = JadwalWawancara::with(['pengajuan.user', 'pewawancara'])
+            ->whereIn('status', ['approved', 'completed'])
+            ->latest()
+            ->get();
+
+        $fileName = 'Rekap_Jadwal_Wawancara_' . date('Y-m-d_H-i') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function () use ($data) {
+            $file = fopen('php://output', 'w');
+
+            // Header Kolom Excel
+            fputcsv($file, [
+                'No',
+                'Nama Perawat',
+                'Unit Kerja',
+                'Nama Pewawancara',
+                'Tanggal',
+                'Jam',
+                'Lokasi',
+                'Deskripsi Skill/Topik',
+                'Status'
+            ]);
+
+            foreach ($data as $key => $row) {
+                $waktu = \Carbon\Carbon::parse($row->waktu_wawancara);
+
+                fputcsv($file, [
+                    $key + 1,
+                    $row->pengajuan->user->name ?? '-',
+                    $row->pengajuan->user->perawatPekerjaan->last()->unit_kerja ?? '-', // Sesuaikan relasi unit kerja
+                    $row->pewawancara->nama ?? '-',
+                    $waktu->format('Y-m-d'),
+                    $waktu->format('H:i'),
+                    $row->lokasi,
+                    $row->deskripsi_skill ?? '-',
+                    ucfirst($row->status)
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return new StreamedResponse($callback, 200, $headers);
     }
 }
