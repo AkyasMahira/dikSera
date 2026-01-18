@@ -296,8 +296,8 @@
         {{-- HEADER --}}
         <div class="page-header">
             <div>
-                <h1 class="page-title">Approval Perpanjangan</h1>
-                <p class="page-subtitle">Manajemen validasi lisensi dan sertifikat perawat.</p>
+                <h1 class="page-title">Approval Pengajuan</h1>
+                <p class="page-subtitle">Manajemen validasi lisensi baru dan perpanjangan.</p>
             </div>
             <div class="d-none d-md-flex gap-3">
                 <div class="px-3 py-1 bg-white border rounded-3 d-flex align-items-center gap-2 shadow-sm">
@@ -362,6 +362,7 @@
                 </div>
             </form>
         </div>
+        
         {{-- TABLE SECTION --}}
         <div class="table-card">
             <div class="table-responsive">
@@ -374,7 +375,7 @@
                             <th>Perawat</th>
                             <th>Sertifikat</th>
                             <th>Status</th>
-                            <th>Metode</th>
+                            <th>Metode/Tipe</th> {{-- Diupdate labelnya --}}
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -382,6 +383,7 @@
                         @forelse($pengajuan as $item)
                             <tr>
                                 <td class="text-center">
+                                    {{-- Checkbox hanya aktif untuk status yang bisa di-bulk --}}
                                     @if (in_array($item->status, ['pending', 'method_selected', 'interview_scheduled']))
                                         <input type="checkbox" name="ids[]" value="{{ $item->id }}"
                                             class="form-check-input check-item" style="cursor: pointer;">
@@ -408,7 +410,11 @@
                                     </div>
                                 </td>
 
-                                <td><span class="text-dark">{{ $item->lisensiLama->nama ?? '-' }}</span></td>
+                                {{-- Kolom Nama Sertifikat --}}
+                                <td>
+                                    {{-- Tampilkan nama lisensi lama, atau jika baru ambil dari relasi --}}
+                                    <span class="text-dark fw-medium">{{ $item->lisensiLama->nama ?? '-' }}</span>
+                                </td>
 
                                 {{-- Kolom Status --}}
                                 <td>
@@ -432,28 +438,33 @@
                                     @endif
                                 </td>
 
-                                {{-- Kolom Metode --}}
+                                {{-- Kolom Metode (UPDATED UNTUK NEW SUBMISSION) --}}
                                 <td>
                                     <span class="text-muted small">
-                                        @if ($item->metode == 'pg_only')
-                                            Hanya PG
+                                        @if ($item->metode == 'new_submission')
+                                            {{-- Badge khusus Lisensi Baru --}}
+                                            <span class="badge bg-info text-dark border border-info" style="font-size: 10px;">
+                                                <i class="bi bi-star-fill me-1"></i> Lisensi Baru
+                                            </span>
+                                        @elseif ($item->metode == 'pg_only')
+                                            Perpanjangan (PG)
                                         @elseif($item->metode == 'interview_only')
-                                            <span class="status-badge st-purple" style="font-size: 10px;">Hanya
-                                                Wawancara</span>
+                                            <span class="status-badge st-purple" style="font-size: 10px;">Perpanjangan (Wawancara)</span>
                                         @elseif($item->metode == 'pg_interview')
-                                            PG + Wawancara
+                                            Perpanjangan (PG + Wawancara)
                                         @else
                                             -
                                         @endif
                                     </span>
                                 </td>
 
+                                {{-- Kolom Aksi --}}
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-1">
 
-                                        {{-- 2. AKSI APPROVAL AWAL (Status: pending) --}}
+                                        {{-- 1. AKSI APPROVAL AWAL (Status: pending) --}}
+                                        {{-- Berlaku untuk Lisensi Baru maupun Perpanjangan --}}
                                         @if ($item->status == 'pending')
-                                            {{-- Tombol Detail --}}
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail"><i class="bi bi-eye"></i></a>
 
@@ -461,13 +472,23 @@
                                                 method="POST">
                                                 @csrf
                                                 <button class="btn-icon btn-act-check"
-                                                    onclick="return confirm('Setujui Pengajuan?')" title="Setujui">
+                                                    onclick="return confirm('{{ $item->metode == 'new_submission' ? 'Setujui dan Aktifkan Lisensi Baru?' : 'Setujui Pengajuan Perpanjangan?' }}')" 
+                                                    title="Setujui">
                                                     <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            
+                                            {{-- Tombol Reject (Opsional, jika ada route reject) --}}
+                                            <form action="{{ route('admin.pengajuan.reject', $item->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn-icon btn-act-x" 
+                                                    onclick="return confirm('Tolak pengajuan ini?')" title="Tolak">
+                                                    <i class="bi bi-x-lg"></i>
                                                 </button>
                                             </form>
 
 
-                                            {{-- 3. AKSI APPROVE NILAI UJIAN (HANYA JIKA BUKAN INTERVIEW ONLY) --}}
+                                        {{-- 2. AKSI APPROVE NILAI UJIAN --}}
                                         @elseif ($item->status == 'method_selected' && $item->user->examResult && $item->metode != 'interview_only')
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail"><i class="bi bi-eye"></i></a>
@@ -478,27 +499,23 @@
                                                 <i class="bi bi-check-all"></i>
                                             </a>
 
-                                            {{-- 4. AKSI JADWAL WAWANCARA (BERLAKU UNTUK PG+INTERVIEW & INTERVIEW ONLY) --}}
+                                        {{-- 3. AKSI JADWAL WAWANCARA --}}
                                         @elseif ($item->status == 'interview_scheduled' && $item->jadwalWawancara)
                                             @php $jadwal = $item->jadwalWawancara; @endphp
 
                                             @if ($jadwal->status == 'pending')
-                                                {{-- Tombol Detail --}}
                                                 <a href="{{ route('admin.pengajuan.show', $item->id) }}"
-                                                    class="btn-icon btn-view" title="Detail"><i
-                                                        class="bi bi-eye"></i></a>
+                                                    class="btn-icon btn-view" title="Detail"><i class="bi bi-eye"></i></a>
 
-                                                {{-- Acc Jadwal (Kirim ke Pewawancara) --}}
                                                 <a href="{{ route('admin.pengajuan_wawancara.approve', $jadwal->id) }}"
                                                     class="btn-icon btn-act-check"
                                                     onclick="return confirm('Setujui Jadwal? Data akan dikirim ke Pewawancara.')"
                                                     title="Acc Jadwal">
                                                     <i class="bi bi-calendar-check"></i>
                                                 </a>
-                                                {{-- Reject Jadwal --}}
+                                                
                                                 <button type="button" class="btn-icon btn-act-x" data-bs-toggle="modal"
-                                                    data-bs-target="#rejectModal{{ $jadwal->id }}"
-                                                    title="Tolak Jadwal">
+                                                    data-bs-target="#rejectModal{{ $jadwal->id }}" title="Tolak Jadwal">
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
 
@@ -506,9 +523,7 @@
                                                 <div class="modal fade text-start" id="rejectModal{{ $jadwal->id }}"
                                                     tabindex="-1">
                                                     <div class="modal-dialog modal-sm modal-dialog-centered">
-                                                        <form
-                                                            action="{{ route('admin.pengajuan_wawancara.reject', $jadwal->id) }}"
-                                                            method="POST">
+                                                        <form action="{{ route('admin.pengajuan_wawancara.reject', $jadwal->id) }}" method="POST">
                                                             @csrf
                                                             <div class="modal-content">
                                                                 <div class="modal-header py-2 border-0">
@@ -518,76 +533,56 @@
                                                                     <textarea name="alasan" class="form-control form-control-sm" rows="3" required placeholder="Alasan..."></textarea>
                                                                 </div>
                                                                 <div class="modal-footer border-0 pt-2">
-                                                                    <button type="button" class="btn btn-sm btn-light"
-                                                                        data-bs-dismiss="modal">Batal</button>
-                                                                    <button type="submit"
-                                                                        class="btn btn-sm btn-danger">Kirim</button>
+                                                                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Batal</button>
+                                                                    <button type="submit" class="btn btn-sm btn-danger">Kirim</button>
                                                                 </div>
                                                             </div>
                                                         </form>
                                                     </div>
                                                 </div>
+
                                             @elseif($jadwal->status == 'approved')
-                                                {{-- ========================================================= --}}
-                                                {{-- FITUR BARU: TOMBOL COPY LINK UNTUK PEWAWANCARA --}}
-                                                {{-- ========================================================= --}}
                                                 <button type="button" class="btn-icon btn-act-copy"
                                                     onclick="copyLink('{{ route('pewawancara.penilaian', $jadwal->id) }}')"
                                                     data-bs-toggle="tooltip"
-                                                    title="Salin Link Penilaian untuk dikirim ke Pewawancara">
+                                                    title="Salin Link Penilaian">
                                                     <i class="bi bi-link-45deg"></i>
                                                 </button>
-
-                                                {{-- Indikator Menunggu --}}
-                                                <button class="btn-icon text-secondary" disabled
-                                                    style="cursor: help; opacity: 0.6;"
-                                                    title="Menunggu input nilai dari Pewawancara">
+                                                <button class="btn-icon text-secondary" disabled style="cursor: help; opacity: 0.6;" title="Menunggu Pewawancara">
                                                     <i class="bi bi-hourglass-split"></i>
                                                 </button>
                                             @endif
 
-                                            {{-- 5. JIKA SELESAI (Lihat Nilai) --}}
+                                        {{-- 4. JIKA SELESAI --}}
                                         @elseif($item->status == 'completed')
-                                            {{-- Lihat Nilai --}}
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
-                                                class="btn-icon btn-act-blue" title="Lihat Hasil & Nilai">
+                                                class="btn-icon btn-act-blue" title="Lihat Hasil">
                                                 <i class="bi bi-file-earmark-bar-graph"></i>
                                             </a>
-
-                                            {{-- === TAMBAHAN: TOMBOL DELETE (KETIKA SELESAI) === --}}
                                             <form action="{{ route('admin.pengajuan.destroy', $item->id) }}"
                                                 method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
+                                                @csrf @method('DELETE')
                                                 <button type="submit" class="btn-icon btn-act-x"
-                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')"
-                                                    title="Hapus Data">
+                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')" title="Hapus Data">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
-                                            {{-- ============================================== --}}
 
-                                            {{-- 6. JIKA DITOLAK (REJECTED) --}}
+                                        {{-- 5. JIKA DITOLAK --}}
                                         @elseif($item->status == 'rejected')
-                                            {{-- Tombol Detail --}}
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
-                                                class="btn-icon btn-view" title="Detail Pengajuan">
+                                                class="btn-icon btn-view" title="Detail">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-
-                                            {{-- Opsi Tambahan: Hapus Data (Jika diperlukan) --}}
                                             <form action="{{ route('admin.pengajuan.destroy', $item->id) }}"
                                                 method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
+                                                @csrf @method('DELETE')
                                                 <button type="submit" class="btn-icon btn-act-x"
-                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')"
-                                                    title="Hapus Data">
+                                                    onclick="return confirm('Hapus riwayat pengajuan ini permanen?')" title="Hapus Data">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
 
-                                            {{-- Default: Tombol Detail --}}
                                         @else
                                             <a href="{{ route('admin.pengajuan.show', $item->id) }}"
                                                 class="btn-icon btn-view" title="Detail">
@@ -648,7 +643,6 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -690,7 +684,7 @@
                 }
             });
 
-            // 4. Bulk Logic (Kode Lama Anda)
+            // 4. Bulk Logic
             const checkAll = document.getElementById('checkAll');
             const checkItems = document.querySelectorAll('.check-item');
             const bulkActionBar = document.getElementById('bulkActionBar');
@@ -716,7 +710,7 @@
             checkItems.forEach(item => item.addEventListener('change', updateBulkBar));
         });
 
-        // 5. Fungsi Copy Link (Kode Lama Anda)
+        // 5. Fungsi Copy Link
         function copyLink(url) {
             navigator.clipboard.writeText(url).then(() => {
                 Swal.fire({

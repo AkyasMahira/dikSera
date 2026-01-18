@@ -29,7 +29,6 @@
             --st-info-text: #0369a1;
             --st-purple-bg: #f3e8ff;
             --st-purple-text: #7e22ce;
-            /* Tambahan warna ungu */
         }
 
         body {
@@ -378,16 +377,15 @@
                                 </div>
                             </div>
 
-                            {{-- STATUS BADGES (LOGIKA PERBAIKAN DI SINI) --}}
+                            {{-- STATUS BADGES (LOGIKA PERBAIKAN) --}}
                             <div>
                                 @if ($item->status == 'pending')
                                     <span class="status-badge badge-pending"><i class="bi bi-hourglass-split"></i> Menunggu
-                                        Admin</span>
+                                        Verifikasi</span>
                                 @elseif($item->status == 'method_selected')
                                     <span class="status-badge badge-primary"><i class="bi bi-pencil-square"></i> Siap
                                         Ujian</span>
                                 @elseif($item->status == 'exam_passed')
-                                    {{-- PERBAIKAN: Jika interview_only, teks badge beda --}}
                                     <span class="status-badge badge-info">
                                         <i class="bi bi-check-lg"></i>
                                         {{ $item->metode == 'interview_only' ? 'Siap Wawancara' : 'Lulus Tulis' }}
@@ -396,22 +394,29 @@
                                     <span class="status-badge badge-warning"><i class="bi bi-calendar-event"></i> Jadwal
                                         Wawancara</span>
                                 @elseif($item->status == 'completed')
-                                    <span class="status-badge badge-success"><i class="bi bi-patch-check-fill"></i>
-                                        Selesai</span>
+                                    {{-- Cek jika ini Lisensi Baru (metode null) --}}
+                                    @if (is_null($item->metode))
+                                        {{-- GANTI TEKS AGAR TIDAK BINGUNG --}}
+                                        <span class="status-badge badge-success"><i class="bi bi-check-circle-fill"></i>
+                                            Penerbitan Selesai</span>
+                                    @else
+                                        <span class="status-badge badge-success"><i class="bi bi-patch-check-fill"></i>
+                                            Selesai</span>
+                                    @endif
                                 @elseif($item->status == 'rejected')
                                     <span class="status-badge badge-danger"><i class="bi bi-x-circle-fill"></i>
                                         Ditolak</span>
                                 @elseif($item->status == 'interview_failed')
-                                    <span class="status-badge badge-danger"><i class="bi bi-x-circle-fill"></i>
-                                        Gagal Wawancara</span>
+                                    <span class="status-badge badge-danger"><i class="bi bi-x-circle-fill"></i> Gagal
+                                        Wawancara</span>
                                 @endif
                             </div>
                         </div>
 
                         <div class="card-body-custom">
 
-                            {{-- INFO METODE (PERBAIKAN DI SINI: Tampilkan "Hanya Wawancara") --}}
-                            @if (!in_array($item->status, ['pending', 'rejected']))
+                            {{-- INFO METODE (Hanya muncul jika bukan lisensi baru yang sudah selesai) --}}
+                            @if (!is_null($item->metode) && !in_array($item->status, ['pending', 'rejected']))
                                 <div class="alert-modern blue">
                                     <i class="bi bi-info-circle-fill fs-5"></i>
                                     <div>
@@ -429,7 +434,19 @@
                                 </div>
                             @endif
 
-                            {{-- INSTRUKSI UJIAN (Hanya muncul jika BUKAN interview_only) --}}
+                            {{-- INFO UNTUK LISENSI BARU --}}
+                            @if (is_null($item->metode) && $item->status == 'pending')
+                                <div class="alert-modern blue">
+                                    <i class="bi bi-info-circle-fill fs-5"></i>
+                                    <div>
+                                        <span class="fw-bold d-block">Pengajuan Lisensi Baru</span>
+                                        <span>Dokumen Anda sedang diperiksa oleh Admin. Mohon menunggu persetujuan.</span>
+                                    </div>
+                                </div>
+                            @endif
+
+
+                            {{-- INSTRUKSI UJIAN --}}
                             @if ($item->status == 'method_selected')
                                 <div class="alert-modern yellow action-required">
                                     <i class="bi bi-exclamation-triangle-fill fs-5"></i>
@@ -441,8 +458,7 @@
                                 </div>
                             @endif
 
-                            {{-- FORM: PENGAJUAN JADWAL (PERBAIKAN UTAMA DI SINI) --}}
-                            {{-- Logika sebelumnya hanya mengecek 'pg_interview'. Sekarang kita tambah 'interview_only' --}}
+                            {{-- FORM: PENGAJUAN JADWAL --}}
                             @if (in_array($item->status, ['exam_passed', 'interview_failed']) &&
                                     in_array($item->metode, ['pg_interview', 'interview_only']))
                                 <div class="action-container">
@@ -555,22 +571,34 @@
                                     <div class="certificate-icon">
                                         <i class="bi bi-trophy-fill"></i>
                                     </div>
-                                    <h4 class="fw-bold text-success mb-2">Selamat! Lisensi Diperbarui</h4>
-                                    <p class="text-secondary mb-4 col-md-8 mx-auto" style="font-size: 0.95rem;">
-                                        Proses evaluasi telah selesai dan lisensi Anda telah aktif kembali. Silakan unduh
-                                        bukti kelulusan digital Anda di bawah ini.
-                                    </p>
 
-                                    <a href="{{ route('perawat.pengajuan.sertifikat', $item->id) }}"
-                                        class="btn btn-success fw-bold px-4 py-2 shadow-sm" target="_blank">
-                                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>
-                                        {{-- LOGIKA UBAH TEKS TOMBOL --}}
-                                        @if ($item->metode == 'interview_only')
-                                            Unduh Dokumen SK
-                                        @else
-                                            Unduh Sertifikat (PDF)
-                                        @endif
-                                    </a>
+                                    {{-- JUDUL & TEXT SESUAI JENIS LISENSI --}}
+                                    @if (is_null($item->metode))
+                                        {{-- JIKA LISENSI BARU (HISTORY) --}}
+                                        <h4 class="fw-bold text-success mb-2">Lisensi Baru Diterbitkan</h4>
+                                        <p class="text-secondary mb-4 col-md-8 mx-auto" style="font-size: 0.95rem;">
+                                            Pengajuan penerbitan lisensi baru Anda telah selesai. Dokumen dapat dilihat pada
+                                            menu Daftar Lisensi.
+                                        </p>
+                                        <a href="{{ route('perawat.lisensi.index') }}"
+                                            class="btn btn-outline-success fw-bold px-4 py-2">
+                                            <i class="bi bi-arrow-right-circle me-2"></i> Cek Daftar Lisensi
+                                        </a>
+                                    @else
+                                        {{-- JIKA PERPANJANGAN (ADA SERTIFIKAT KOMPETENSI) --}}
+                                        <h4 class="fw-bold text-success mb-2">Selamat! Lisensi Diperbarui</h4>
+                                        <p class="text-secondary mb-4 col-md-8 mx-auto" style="font-size: 0.95rem;">
+                                            Proses evaluasi telah selesai dan lisensi Anda telah aktif kembali. Silakan
+                                            unduh
+                                            bukti kelulusan digital Anda di bawah ini.
+                                        </p>
+
+                                        <a href="{{ route('perawat.pengajuan.sertifikat', $item->id) }}"
+                                            class="btn btn-success fw-bold px-4 py-2 shadow-sm" target="_blank">
+                                            <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+                                            {{ $item->metode == 'interview_only' ? 'Unduh Dokumen SK' : 'Unduh Sertifikat (PDF)' }}
+                                        </a>
+                                    @endif
                                 </div>
                             @endif
 

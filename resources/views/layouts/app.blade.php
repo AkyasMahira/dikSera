@@ -526,7 +526,7 @@
                                 <i class="bi bi-file-earmark-plus-fill"></i> Data Tambahan
                             </a>
                         </div>
-{{-- 
+                        {{-- 
                         <a href="{{ route('perawat.lisensi.index') }}"
                             class="nav-linkx {{ request()->routeIs('perawat.lisensi.*') ? 'active' : '' }}">
                             <i class="bi bi-file-earmark-arrow-up-fill"></i>
@@ -535,10 +535,8 @@
 
                         {{-- LOGIKA CEK DATA DI SIDEBAR --}}
                         @php
-                            // Cek apakah user sudah pernah mengajukan Uji Kompetensi (pg_interview)
-                            // Pastikan namespace model sesuai dengan aplikasi kamu (misal: App\Models\PerawatLisensi)
                             $hasUjiKomp = \App\Models\PerawatLisensi::where('user_id', Auth::id())
-                                ->where('metode_perpanjangan', 'pg_interview')
+                                ->where('metode', 'pg_interview')
                                 ->exists();
 
                             $isKredensialActive = request()->routeIs('perawat.lisensi.create');

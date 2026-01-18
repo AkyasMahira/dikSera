@@ -18,7 +18,7 @@ class AdminPengajuanController extends Controller
             $search = $request->search;
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%");
+                    ->orWhere('email', 'LIKE', "%{$search}%");
             });
         }
 
@@ -45,31 +45,50 @@ class AdminPengajuanController extends Controller
     }
 
     public function approve(Request $request, $id)
-{
-    $pengajuan = PengajuanSertifikat::findOrFail($id);
+    {
+        $pengajuan = PengajuanSertifikat::with('lisensiLama')->findOrFail($id);
 
-    if (!$pengajuan->metode) {
-         $pengajuan->metode = 'pg_only';
+        // [PRIORITAS 1] CEK APAKAH INI PENGAJUAN BARU? (Metode == NULL)
+        if (is_null($pengajuan->metode)) {
+
+            // 1. Aktifkan Lisensi Perawat
+            if ($pengajuan->lisensiLama) {
+                $pengajuan->lisensiLama->update([
+                    'status' => 'active' // SAHKAN MENJADI AKTIF
+                ]);
+            }
+
+            // 2. Tandai Tiket Selesai
+            $pengajuan->update([
+                'status' => 'completed',
+                'keterangan' => 'Lisensi Baru disetujui dan diaktifkan Admin.'
+            ]);
+
+            return back()->with('success', 'Lisensi Baru BERHASIL disetujui dan statusnya sekarang AKTIF.');
+        }
+
+        // [PRIORITAS 2] LOGIKA PERPANJANGAN (Data Lama / Ada Metodenya)
+        if ($pengajuan->metode == 'interview_only') {
+            $pengajuan->update(['status' => 'exam_passed']);
+            $msg = "Perpanjangan disetujui (Metode: Wawancara). Peserta dapat memilih jadwal.";
+        } else {
+            // Default: pg_only atau pg_interview atau metode lain yang tidak null
+            $pengajuan->update(['status' => 'method_selected']);
+            $msg = "Perpanjangan disetujui (Metode: Ujian). Peserta dapat mengerjakan ujian.";
+        }
+
+        return back()->with('success', $msg);
     }
-
-    if ($pengajuan->metode == 'interview_only') {
-        $pengajuan->update([
-            'status' => 'exam_passed',
-        ]);
-        $msg = "Pengajuan disetujui. Metode: Hanya Wawancara. Peserta dapat langsung mengajukan jadwal.";
-    } else {
-        $pengajuan->update([
-            'status' => 'method_selected',
-        ]);
-        $msg = "Pengajuan disetujui. Perawat dapat segera ujian.";
-    }
-
-    return back()->with('success', $msg);
-}
 
     public function reject($id)
     {
-        $pengajuan = PengajuanSertifikat::findOrFail($id);
+        $pengajuan = PengajuanSertifikat::with('lisensiLama')->findOrFail($id);
+
+        // Jika Lisensi Baru ditolak, maka lisensinya kita tandai rejected juga
+        if ($pengajuan->metode == 'new_submission' && $pengajuan->lisensiLama) {
+            $pengajuan->lisensiLama->update(['status' => 'rejected']);
+        }
+
         $pengajuan->update(['status' => 'rejected']);
 
         return back()->with('success', 'Pengajuan ditolak.');
@@ -104,7 +123,6 @@ class AdminPengajuanController extends Controller
                 ]);
             }
             return back()->with('success', "Nilai (Skor: {$examResult->total_nilai}) disetujui & Status Ujian diubah LULUS. Proses selesai.");
-
         } else if ($pengajuan->metode == 'interview_only') {
             // [KHUSUS INTERVIEW ONLY] Langsung finalize tanpa butuh ExamResult
             $pengajuan->update(['status' => 'completed']);
@@ -120,7 +138,6 @@ class AdminPengajuanController extends Controller
             ]);
 
             return back()->with('success', "Pengajuan wawancara disetujui & selesai. Lisensi diperpanjang.");
-
         } else {
             // [PG + Interview]
             $pengajuan->update(['status' => 'exam_passed']);
@@ -164,29 +181,29 @@ class AdminPengajuanController extends Controller
         return back()->with('success', 'Proses perpanjangan selesai sepenuhnya & Lisensi diperbarui.');
     }
 
-   public function bulkApprove(Request $request)
-{
-    // ... validasi ...
-    $ids = $request->ids;
-    $pengajuans = PengajuanSertifikat::whereIn('id', $ids)->where('status', 'pending')->get();
-    $count = 0;
+    public function bulkApprove(Request $request)
+    {
+        // ... validasi ...
+        $ids = $request->ids;
+        $pengajuans = PengajuanSertifikat::whereIn('id', $ids)->where('status', 'pending')->get();
+        $count = 0;
 
-    foreach ($pengajuans as $pengajuan) {
-        if (!$pengajuan->metode) {
-             $pengajuan->metode = 'pg_only';
+        foreach ($pengajuans as $pengajuan) {
+            if (!$pengajuan->metode) {
+                $pengajuan->metode = 'pg_only';
+            }
+
+            // --- LOGIKA BARU ---
+            if ($pengajuan->metode == 'interview_only') {
+                $pengajuan->update(['status' => 'exam_passed']);
+            } else {
+                $pengajuan->update(['status' => 'method_selected']);
+            }
+            $count++;
         }
 
-        // --- LOGIKA BARU ---
-        if ($pengajuan->metode == 'interview_only') {
-            $pengajuan->update(['status' => 'exam_passed']);
-        } else {
-            $pengajuan->update(['status' => 'method_selected']);
-        }
-        $count++;
+        return back()->with('success', "Berhasil menyetujui $count pengajuan terpilih.");
     }
-
-    return back()->with('success', "Berhasil menyetujui $count pengajuan terpilih.");
-}
 
     // --- PERBAIKAN 2: Bulk Approve Score ---
     public function bulkApproveScore(Request $request)
@@ -199,9 +216,9 @@ class AdminPengajuanController extends Controller
         $ids = $request->ids;
 
         $pengajuans = PengajuanSertifikat::with('user.examResult', 'lisensiLama')
-                        ->whereIn('id', $ids)
-                        ->where('status', 'method_selected')
-                        ->get();
+            ->whereIn('id', $ids)
+            ->where('status', 'method_selected')
+            ->get();
 
         $count = 0;
         $skipped = 0;
@@ -221,7 +238,7 @@ class AdminPengajuanController extends Controller
                 }
 
                 if ($pengajuan->metode == 'pg_only') {
-                     // ... (Kode pg_only tetap sama) ...
+                    // ... (Kode pg_only tetap sama) ...
                     $pengajuan->update(['status' => 'completed']);
                     if ($pengajuan->lisensiLama) {
                         $pengajuan->lisensiLama->update([
@@ -239,8 +256,8 @@ class AdminPengajuanController extends Controller
 
                     // Gunakan whereId atau relasi yang spesifik agar tidak mengupdate semua lisensi jika user punya banyak
                     // Asumsi: lisensis() me-refer ke relasi yang benar atau gunakan query update spesifik
-                    if($lisensi) {
-                         $lisensi->update([
+                    if ($lisensi) {
+                        $lisensi->update([
                             'tgl_terbit' => $newTerbit,
                             'tgl_expired' => $newExpired
                         ]);
@@ -272,9 +289,9 @@ class AdminPengajuanController extends Controller
 
         // Ambil pengajuan yang punya jadwal pending
         $pengajuans = PengajuanSertifikat::with('jadwalWawancara')
-                        ->whereIn('id', $ids)
-                        ->where('status', 'interview_scheduled')
-                        ->get();
+            ->whereIn('id', $ids)
+            ->where('status', 'interview_scheduled')
+            ->get();
 
         $count = 0;
         $skipped = 0;
